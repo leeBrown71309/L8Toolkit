@@ -69,16 +69,18 @@ $securePassword = Read-Host "Password of the signing key (to store it as a GitHu
 $password = [System.Net.NetworkCredential]::new("", $securePassword).Password
 
 # Check the password by signing a scratch file before anything is uploaded.
+# The key goes by path (-f); the password through the environment, never on the command line.
 $probe = New-TemporaryFile
+$ErrorActionPreference = "Continue"
 try {
-    $env:TAURI_SIGNING_PRIVATE_KEY = $keyPath
     $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = $password
     Push-Location $projectRoot
-    bun x tauri signer sign $probe.FullName 2>&1 | Out-Null
+    bun x tauri signer sign -f $keyPath $probe.FullName 2>&1 | Out-Null
     $signed = $LASTEXITCODE -eq 0
     Pop-Location
 } finally {
-    Remove-Item Env:TAURI_SIGNING_PRIVATE_KEY, Env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD -ErrorAction SilentlyContinue
+    $ErrorActionPreference = "Stop"
+    Remove-Item Env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD -ErrorAction SilentlyContinue
     Remove-Item $probe.FullName, "$($probe.FullName).sig" -ErrorAction SilentlyContinue
 }
 if (-not $signed) {
