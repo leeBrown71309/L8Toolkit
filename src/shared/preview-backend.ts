@@ -170,7 +170,7 @@ export function createPreviewBackend(): Backend {
   const listeners = new Map<string, Set<(payload: unknown) => void>>();
   let snapshot: SettingsSnapshot = {
     settings: DEFAULT_SETTINGS,
-    status: { hotkeyError: null, appsIndexed: 214, filesIndexed: 48_213, indexingFiles: false, version: "0.2.0", devBuild: true },
+    status: { hotkeyError: null, appsIndexed: 214, filesIndexed: 48_213, indexingFiles: false, version: "0.2.0", devBuild: false },
     systemAccentColor: "#0078d4",
     effectiveLanguage: new URLSearchParams(location.search).get("lang") === "fr" ? "fr" : "en",
   };
