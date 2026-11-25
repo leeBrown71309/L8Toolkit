@@ -23,12 +23,16 @@ GitHub Releases. Nothing in the chain is paid.
 Installed copies find it within 6 hours (or at their next start), show a Windows notification,
 add "Install update" to the tray menu and a dot on Settings › Updates.
 
-## On this PC after a release
+## On this PC around a release
+
+Before a release goes out, the test copy must not be running or installed (see CLAUDE.md):
 
 ```powershell
-bun run dev:remove        # the test copy disappears (process, startup entry, data, executables)
-bun run release:install   # installs the latest release if it is missing or older
+bun run dev:remove        # stops and removes the test copy; its settings are kept
+bun run release:install   # once published: installs the latest release if missing or older
 ```
+
+`powershell -File scripts/remove-dev-app.ps1 -DeleteData` also deletes the test copy's settings.
 
 ## The signing key (one-time setup, keep it safe)
 

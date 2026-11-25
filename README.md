@@ -55,7 +55,7 @@ Only one can run at a time (both draw a notch and use the same shortcut): `app:d
 installed release first. When a feature is merged and released:
 
 ```powershell
-bun run dev:remove        # removes every trace of the test copy
+bun run dev:remove        # removes the test copy (keeps its settings for next time)
 bun run release:install   # installs the latest release if it is missing or older
 ```
 
