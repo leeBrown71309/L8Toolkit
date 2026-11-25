@@ -74,6 +74,14 @@ run of the Release workflow, or a local `bun run app:build`):
 4. Once the release is published, install it with `bun run release:install` (it downloads the
    installer from the GitHub release: ask the maintainer before running it).
 
+## Version numbers
+
+The patch number counts from 0 to 5, then the minor number goes up and the patch restarts:
+`0.1.0 → 0.1.1 → … → 0.1.5 → 0.2.0 → … → 0.2.5 → 0.3.0 → …` until the maintainer decides on 1.0.0.
+`bun run version:next` applies the next number to `package.json`, `src-tauri/tauri.conf.json` and
+`src-tauri/Cargo.toml` (then `cargo check` so `Cargo.lock` follows); `--to 1.0.0` for a chosen one.
+Every release bumps the version; a merge without a bump publishes nothing.
+
 ## Releases
 
 Work on `dev`, open a pull request into `main` (protected: one approving review from the

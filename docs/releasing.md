@@ -12,8 +12,10 @@ GitHub Releases. Nothing in the chain is paid.
 
 ## Publishing a version
 
-1. In the pull request, bump the version in `package.json`, `src-tauri/tauri.conf.json` and
-   `src-tauri/Cargo.toml` (then run `cargo check` once so `Cargo.lock` follows).
+1. In the pull request, bump the version with `bun run version:next`, then run `cargo check` in
+   `src-tauri` so `Cargo.lock` follows. Numbering rule: the patch number counts from 0 to 5, then
+   the minor number goes up (`0.1.0 → … → 0.1.5 → 0.2.0 → … → 0.2.5 → 0.3.0 …`) until 1.0.0,
+   which is chosen explicitly (`bun run version:next --to 1.0.0`).
 2. Replace `release-notes.md` with the notes of this version. They appear on the GitHub release
    and in Settings › Updates, so write them for users.
 3. Merge. `.github/workflows/release.yml` builds the signed installer, writes `latest.json`
