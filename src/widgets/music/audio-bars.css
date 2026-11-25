@@ -1,0 +1,45 @@
+/*
+ * Audio bars across the folded notch. The notch is black whatever the theme,
+ * so the bars are a light tinted by the media glow; the edges fade out so the
+ * row melts into the notch's rounded corners instead of ending abruptly.
+ */
+.audio-bars {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(var(--notch-w) - 44px);
+  height: 16px;
+  translate: -50% -50%;
+  mask-image: linear-gradient(to right, transparent 0, black 16%, black 84%, transparent 100%);
+  opacity: 0.55;
+  transition: opacity 400ms var(--ease-out);
+}
+
+.audio-bars[data-active="true"] {
+  opacity: 1;
+}
+
+/* Stand-in motion (sound playing on a phone): a touch softer than real
+   audio, so the two never read as the same thing. */
+.audio-bars[data-active="true"][data-source="simulated"] {
+  opacity: 0.8;
+}
+
+.audio-bars__bar {
+  flex: none;
+  width: 3px;
+  height: 100%;
+  border-radius: 1.5px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--media-glow, var(--accent)) 35%, #ffffff),
+    color-mix(in srgb, var(--media-glow, var(--accent)) 75%, #ffffff) 50%,
+    color-mix(in srgb, var(--media-glow, var(--accent)) 35%, #ffffff)
+  );
+  /* Rest position until the first frame arrives: a row of dots. */
+  transform: scaleY(0.14);
+  will-change: transform;
+}

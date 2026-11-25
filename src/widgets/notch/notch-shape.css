@@ -1,0 +1,440 @@
+/*
+ * The notch is one shape that morphs between idle and open.
+ *
+ * Geometry lives in registered custom properties so the browser can
+ * interpolate them; every layer derives its clip from the same values, which
+ * keeps body, rim, shoulders and shadow perfectly in sync. Nothing resizes the
+ * native window, so the morph never stutters. Glass materials are drawn here
+ * too, from an image of what is behind (see backdrop.rs for why).
+ *
+ * Idle, the notch is black whatever the theme (it stands for the camera
+ * housing). Opening cross-fades the black cover into the chosen material.
+ */
+@property --notch-w {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 196px;
+}
+
+@property --notch-h {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 30px;
+}
+
+@property --notch-r {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 12px;
+}
+
+@property --shoulder {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 8px;
+}
+
+/* Playback progress (0 to 1), drawn by the light along the notch edge. */
+@property --media-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.notch-canvas {
+  /* Keep idle sizes in sync with IDLE_LIVE_NOTCH_WIDTH / IDLE_NOTCH_HEIGHT in notch.rs. */
+  --notch-idle-w: 196px;
+  --notch-idle-h: 30px;
+  --notch-open-w: 680px;
+  --media-glow: var(--accent);
+
+  --notch-w: var(--notch-idle-w);
+  --notch-h: var(--notch-idle-h);
+  --notch-r: 12px;
+  --shoulder: 8px;
+
+  position: fixed;
+  inset: 0;
+  /* Closing is quick and plain: the user is done, get out of the way.
+     Progress moves linearly between its twice-a-second updates. */
+  transition:
+    --notch-w 220ms var(--ease-out),
+    --notch-h 200ms var(--ease-out),
+    --notch-r 200ms var(--ease-out),
+    --shoulder 200ms var(--ease-out),
+    --media-progress 520ms linear;
+}
+
+/* Media playing: the idle notch grows a little, giving the light more room. */
+.notch-canvas[data-live="true"] {
+  --notch-idle-w: 224px;
+}
+
+/* A new track: the notch swells to show it, Dynamic-Island style. */
+.notch-canvas[data-mode="peek"] {
+  --notch-w: 400px;
+  --notch-h: 64px;
+  --notch-r: 24px;
+  --shoulder: 12px;
+  transition:
+    --notch-w 420ms var(--ease-liquid),
+    --notch-h 360ms var(--ease-drawer),
+    --notch-r 360ms var(--ease-drawer),
+    --shoulder 360ms var(--ease-drawer),
+    --media-progress 520ms linear;
+}
+
+.notch-canvas[data-mode="open"] {
+  --notch-w: var(--notch-open-w);
+  --notch-h: var(--notch-open-h, 160px);
+  --notch-r: var(--radius-panel);
+  --shoulder: 14px;
+  /* Opening flows down from the notch: width with a hint of overshoot,
+     height with a drawer curve so the panel "pours" out. */
+  transition:
+    --notch-w 340ms var(--ease-liquid),
+    --notch-h 300ms var(--ease-drawer),
+    --notch-r 300ms var(--ease-drawer),
+    --shoulder 300ms var(--ease-drawer),
+    --media-progress 520ms linear;
+}
+
+/* Concave fillets joining the notch to the top edge of the screen. Their
+   color animates through `currentColor` so they follow the cover fade. */
+.notch-shoulder {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--shoulder);
+  height: var(--shoulder);
+  color: var(--bezel-black);
+  pointer-events: none;
+  transition: color 160ms var(--ease-out);
+}
+
+.notch-canvas[data-mode="open"] .notch-shoulder {
+  color: var(--notch-surface-top);
+  transition: color 260ms var(--ease-out) 40ms;
+}
+
+.notch-shoulder--left {
+  transform: translateX(calc(var(--notch-w) / -2 - var(--shoulder) + 0.5px));
+  background: radial-gradient(circle at 0 100%, transparent calc(var(--shoulder) - 0.75px), currentColor var(--shoulder));
+}
+
+.notch-shoulder--right {
+  transform: translateX(calc(var(--notch-w) / 2 - 0.5px));
+  background: radial-gradient(circle at 100% 100%, transparent calc(var(--shoulder) - 0.75px), currentColor var(--shoulder));
+}
+
+.notch-shadow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--notch-w);
+  height: var(--notch-h);
+  translate: -50% 0;
+  border-radius: 0 0 var(--notch-r) var(--notch-r);
+  box-shadow:
+    0 28px 60px -18px var(--drop-shadow),
+    0 10px 22px -8px var(--drop-shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms var(--ease-out);
+}
+
+.notch-canvas[data-mode="open"] .notch-shadow {
+  opacity: 1;
+  transition-duration: 260ms;
+}
+
+/* 1px rim, 1px larger than the body: light catches only the lower edge,
+   warmest at the centre, like a polished stone under a lamp. The glows are
+   children of the rim, so its clip keeps them on that 1px edge. */
+.notch-rim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  clip-path: inset(
+    0 calc(50% - var(--notch-w) / 2 - 1px) calc(100% - var(--notch-h) - 1px) calc(50% - var(--notch-w) / 2 - 1px)
+    round 0 0 calc(var(--notch-r) + 1px) calc(var(--notch-r) + 1px)
+  );
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--notch-h) * 0.35),
+    var(--notch-rim) var(--notch-h)
+  );
+  opacity: 0.55;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.notch-canvas[data-mode="open"] .notch-rim,
+.notch-canvas[data-live="true"] .notch-rim {
+  opacity: 1;
+}
+
+/* Resting light, in the accent color. */
+.notch-rim::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--notch-h) - 26px);
+  left: 50%;
+  width: calc(var(--notch-w) * 0.62);
+  height: 52px;
+  translate: -50% 0;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, var(--accent-glow), transparent 72%);
+  pointer-events: none;
+  transition: opacity 400ms var(--ease-out);
+}
+
+.notch-canvas[data-live="true"]:not([data-mode="open"]) .notch-rim::before {
+  opacity: 0;
+}
+
+/*
+ * Live activity: the notch edge becomes the progress bar. A 2px ring around
+ * the notch (the body covers its inside) lights up from left to right as the
+ * track plays, with a brighter "comet" at the current position.
+ */
+.notch-live-ring {
+  --ring: 2px;
+  --ring-left: calc(50% - var(--notch-w) / 2 - var(--ring));
+  --ring-width: calc(var(--notch-w) + var(--ring) * 2);
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  clip-path: inset(
+    0 calc(50% - var(--notch-w) / 2 - var(--ring)) calc(100% - var(--notch-h) - var(--ring))
+    calc(50% - var(--notch-w) / 2 - var(--ring))
+    round 0 0 calc(var(--notch-r) + var(--ring)) calc(var(--notch-r) + var(--ring))
+  );
+  opacity: 0;
+  transition: opacity 500ms var(--ease-out);
+}
+
+.notch-canvas[data-live="true"]:not([data-mode="open"]) .notch-live-ring {
+  opacity: 0.5;
+}
+
+.notch-canvas[data-live="true"][data-playing="true"]:not([data-mode="open"]) .notch-live-ring {
+  opacity: 1;
+}
+
+.notch-live-ring__track,
+.notch-live-ring__fill {
+  position: absolute;
+  top: 0;
+  left: var(--ring-left);
+  width: var(--ring-width);
+  height: calc(var(--notch-h) + var(--ring));
+  /* Only the lower part of the sides lights up: the light hugs the edge
+     the eye reads as "bottom", like the resting rim. */
+  mask-image: linear-gradient(to bottom, transparent 30%, black 100%);
+}
+
+.notch-live-ring__track {
+  background: var(--media-glow);
+  opacity: 0.16;
+}
+
+.notch-live-ring__fill {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--media-glow) 35%, transparent),
+    var(--media-glow)
+  );
+  transform: scaleX(var(--media-progress));
+  transform-origin: left;
+}
+
+.notch-live-ring__comet {
+  position: absolute;
+  top: calc(var(--notch-h) - 16px);
+  left: calc(var(--ring-left) + var(--ring-width) * var(--media-progress) - 22px);
+  width: 44px;
+  height: 36px;
+  background: radial-gradient(closest-side, #ffffff, var(--media-glow) 45%, transparent);
+  opacity: 0.85;
+}
+
+.notch-canvas[data-live="true"][data-playing="true"] .notch-live-ring__comet {
+  animation: comet-breathe 2.6s var(--ease-in-out-sine) infinite;
+}
+
+/* Live stream (no duration): the whole edge glows, no position to show. */
+.notch-canvas[data-progress="unknown"] .notch-live-ring__comet {
+  display: none;
+}
+
+/* The halo under the notch rides along with the comet. */
+.notch-spill {
+  position: absolute;
+  top: calc(var(--notch-h) - 12px);
+  left: calc(50% - var(--notch-w) / 2 + var(--notch-w) * var(--media-progress));
+  width: 120px;
+  height: 30px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse 50% 50% at 50% 30%, var(--media-glow), transparent 70%);
+  filter: blur(9px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms var(--ease-out);
+}
+
+.notch-canvas[data-progress="unknown"] .notch-spill {
+  left: 50%;
+  width: calc(var(--notch-w) * 0.7);
+}
+
+.notch-canvas[data-live="true"][data-playing="true"]:not([data-mode="open"]) .notch-spill {
+  opacity: 0.24;
+  animation: spill-breathe 2.6s var(--ease-in-out-sine) infinite;
+}
+
+@keyframes comet-breathe {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes spill-breathe {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.notch-body {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: inset(
+    0 calc(50% - var(--notch-w) / 2) calc(100% - var(--notch-h)) calc(50% - var(--notch-w) / 2)
+    round 0 0 var(--notch-r) var(--notch-r)
+  );
+}
+
+/* Glass materials: the image behind (wallpaper or screen snapshot), blurred.
+   Its own layer, so the morph never re-runs the blur. */
+.notch-backdrop {
+  position: absolute;
+  background-repeat: no-repeat;
+  filter: blur(var(--backdrop-blur, 40px)) saturate(var(--backdrop-saturation, 1.4));
+  transform: scale(1.06);
+  will-change: transform;
+  pointer-events: none;
+}
+
+.notch-backdrop[data-fit="window"] {
+  inset: 0;
+  background-size: 100% 100%;
+}
+
+.notch-backdrop[data-fit="screen"] {
+  background-size: cover;
+  background-position: center;
+}
+
+/* The material tint, over the backdrop when there is one. */
+.notch-surface {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, var(--notch-surface-top) 0, var(--notch-surface-top) 38px, var(--notch-surface) 150px);
+  pointer-events: none;
+}
+
+/* Warmth rising from the lit edge. */
+.notch-surface::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(var(--notch-h) - 90px);
+  width: calc(var(--notch-w) * 0.8);
+  height: 90px;
+  translate: -50% 0;
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, var(--accent-warmth), transparent);
+  pointer-events: none;
+}
+
+/* Film grain keeps the black from looking like a flat rectangle. */
+.notch-body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: var(--grain-opacity);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* The idle notch: opaque black over whatever material is chosen. */
+.notch-idle-cover {
+  position: absolute;
+  inset: 0;
+  background: var(--bezel-black);
+  pointer-events: none;
+  transition: opacity 140ms var(--ease-out);
+}
+
+.notch-canvas[data-mode="open"] .notch-idle-cover {
+  opacity: 0;
+  transition: opacity 280ms var(--ease-out) 40ms;
+}
+
+.notch-content {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--notch-open-w);
+  translate: -50% 0;
+  transform-origin: 50% 0;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(-10px) scale(0.985);
+  transition:
+    opacity 110ms ease-out,
+    filter 110ms ease-out,
+    transform 160ms var(--ease-out);
+}
+
+.notch-canvas[data-mode="open"] .notch-content {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+  /* Content follows the shape a beat later, so it pours out of the notch. */
+  transition:
+    opacity 220ms var(--ease-out) 70ms,
+    filter 240ms var(--ease-out) 70ms,
+    transform 320ms var(--ease-drawer) 40ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notch-canvas,
+  .notch-canvas[data-mode="open"],
+  .notch-canvas[data-mode="peek"] {
+    transition: none;
+  }
+
+  /* The live light stays lit, it just stops moving. */
+  .notch-canvas[data-live="true"][data-playing="true"] .notch-live-ring__comet,
+  .notch-canvas[data-live="true"][data-playing="true"]:not([data-mode="open"]) .notch-spill {
+    animation: none;
+  }
+
+  .notch-content,
+  .notch-canvas[data-mode="open"] .notch-content {
+    filter: none;
+    transform: none;
+    transition: opacity 150ms ease;
+  }
+}

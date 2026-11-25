@@ -1,0 +1,143 @@
+/*
+ * Design tokens.
+ *
+ * Default look, "Obsidian": the notch is polished black stone; light only
+ * catches its lower edge, with a single accent color. A light theme
+ * ("Porcelain") and four materials (solid, translucent, Mica, Acrylic) are
+ * layered on top through `data-theme` / `data-material` on <html>.
+ * The accent is one variable (--accent); every tint derives from it.
+ *
+ * Radius rule: nested radii stay concentric. Panel 28px, search well 18px
+ * (panel minus its 10px inset), groups 14px, rows 10px, tiles/inputs 8px,
+ * keycaps 5px, pills (tabs, toggles) fully rounded.
+ */
+:root {
+  --font-sans: "Geist Variable", "Segoe UI Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", "Cascadia Mono", ui-monospace, monospace;
+
+  --radius-panel: 28px;
+  --radius-well: 18px;
+  --radius-group: 14px;
+  --radius-row: 10px;
+  --radius-tile: 8px;
+  --radius-keycap: 5px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /* A hint of overshoot so the notch feels liquid, not mechanical. */
+  --ease-liquid: cubic-bezier(0.34, 1.16, 0.64, 1);
+  /* Ambient loops (breathing light) must have no visible start or stop. */
+  --ease-in-out-sine: cubic-bezier(0.37, 0, 0.63, 1);
+
+  /* Overridden at runtime from the settings (see use-appearance.ts). */
+  --accent: #ec9a55;
+  --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 34%, transparent);
+  --accent-glow: color-mix(in srgb, var(--accent) 55%, transparent);
+  --accent-strong: color-mix(in oklab, var(--accent), white 18%);
+  --accent-warmth: color-mix(in srgb, var(--accent) 7%, transparent);
+
+  /* The idle notch is always black: it stands for the camera housing. */
+  --bezel-black: #000000;
+}
+
+/* ---------- Dark: Obsidian ---------- */
+:root,
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink-1: #0b0b0d;
+  --ink-2: #131316;
+  --ink-3: #1b1b1f;
+  --ink-4: #26262b;
+  --sidebar: #08080a;
+
+  --line-1: rgb(255 255 255 / 0.06);
+  --line-2: rgb(255 255 255 / 0.1);
+  --line-3: rgb(255 255 255 / 0.16);
+
+  --fill-1: rgb(255 255 255 / 0.035);
+  --fill-2: rgb(255 255 255 / 0.06);
+  --fill-3: rgb(255 255 255 / 0.07);
+  --fill-4: rgb(255 255 255 / 0.09);
+  --highlight: rgb(255 255 255 / 0.06);
+  --well-shade: rgb(0 0 0 / 0.55);
+  --keycap-shade: rgb(0 0 0 / 0.45);
+  --drop-shadow: rgb(0 0 0 / 0.7);
+
+  --text-1: #f3f2ef;
+  --text-2: rgb(243 242 239 / 0.66);
+  --text-3: rgb(243 242 239 / 0.46);
+  --text-4: rgb(243 242 239 / 0.28);
+  --toggle-thumb: #f3f2ef;
+
+  /* Notch surface when open (solid material). */
+  --notch-surface-top: var(--bezel-black);
+  --notch-surface: var(--ink-1);
+  --notch-rim: var(--line-3);
+  --grain-opacity: 0.045;
+}
+
+/* ---------- Light: Porcelain ---------- */
+html[data-theme="light"] {
+  color-scheme: light;
+
+  --ink-1: #f6f6f4;
+  --ink-2: #ffffff;
+  --ink-3: #ececea;
+  --ink-4: #e1e1de;
+  --sidebar: #eeeeec;
+
+  --line-1: rgb(0 0 0 / 0.07);
+  --line-2: rgb(0 0 0 / 0.1);
+  --line-3: rgb(0 0 0 / 0.16);
+
+  --fill-1: rgb(0 0 0 / 0.03);
+  --fill-2: rgb(0 0 0 / 0.045);
+  --fill-3: rgb(0 0 0 / 0.055);
+  --fill-4: rgb(0 0 0 / 0.07);
+  --highlight: rgb(255 255 255 / 0.85);
+  --well-shade: rgb(0 0 0 / 0.07);
+  --keycap-shade: rgb(0 0 0 / 0.12);
+  --drop-shadow: rgb(0 0 0 / 0.22);
+
+  --text-1: #19191c;
+  --text-2: rgb(25 25 28 / 0.68);
+  --text-3: rgb(25 25 28 / 0.5);
+  --text-4: rgb(25 25 28 / 0.32);
+  --toggle-thumb: #ffffff;
+
+  /* Darken the accent so highlighted text keeps its contrast on white. */
+  --accent-strong: color-mix(in oklab, var(--accent), black 24%);
+  --accent-warmth: color-mix(in srgb, var(--accent) 9%, transparent);
+
+  --notch-surface-top: var(--ink-1);
+  --notch-surface: var(--ink-1);
+  --notch-rim: rgb(0 0 0 / 0.12);
+  --grain-opacity: 0;
+}
+
+/* ---------- Materials (open panel only) ---------- */
+html[data-material="translucent"] {
+  --notch-surface-top: color-mix(in srgb, var(--ink-1) 76%, transparent);
+  --notch-surface: var(--notch-surface-top);
+  --grain-opacity: 0;
+}
+
+/* Mica: the wallpaper heavily blurred under a strong tint, calm and opaque. */
+html[data-material="mica"] {
+  --notch-surface-top: color-mix(in srgb, var(--ink-1) 66%, transparent);
+  --notch-surface: var(--notch-surface-top);
+  --backdrop-blur: 70px;
+  --backdrop-saturation: 1.6;
+  --grain-opacity: 0;
+}
+
+/* Acrylic: what is behind, frosted, with its characteristic fine noise. */
+html[data-material="acrylic"] {
+  --notch-surface-top: color-mix(in srgb, var(--ink-1) 52%, transparent);
+  --notch-surface: var(--notch-surface-top);
+  --backdrop-blur: 26px;
+  --backdrop-saturation: 1.5;
+  --grain-opacity: 0.06;
+}

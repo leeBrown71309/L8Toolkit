@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2a2e"/>
+      <stop offset="1" stop-color="#141416"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5cc4ff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#5cc4ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="216" fill="url(#face)"/>
+  <rect x="64.5" y="64.5" width="895" height="895" rx="215.5" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3"/>
+  <!-- Notch with concave shoulders, merged with the top edge -->
+  <path d="M224 64 Q284 64 284 128 L284 300 Q284 388 372 388 L652 388 Q740 388 740 300 L740 128 Q740 64 800 64 Z" fill="url(#rim)"/>
+  <path d="M236 64 Q292 64 292 124 L292 296 Q292 380 376 380 L648 380 Q732 380 732 296 L732 124 Q732 64 788 64 Z" fill="#050506"/>
+  <circle cx="512" cy="216" r="26" fill="#1c1c20"/>
+  <circle cx="512" cy="216" r="10" fill="#2e3242"/>
+</svg>

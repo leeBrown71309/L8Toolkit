@@ -1,0 +1,45 @@
+/*
+ * Placeholder sleeve: the accent (or the media glow) lit from the top left,
+ * fading into the panel ink, with the note glyph pressed into it. It fills
+ * whatever frame holds it (panel cover or the notch peek).
+ */
+.cover-placeholder {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: rgb(255 255 255 / 0.82);
+  background:
+    radial-gradient(circle at 28% 22%, color-mix(in srgb, var(--media-glow, var(--accent)) 55%, transparent), transparent 62%),
+    radial-gradient(circle at 82% 90%, color-mix(in srgb, var(--media-glow, var(--accent)) 22%, transparent), transparent 55%),
+    linear-gradient(150deg, color-mix(in srgb, var(--media-glow, var(--accent)) 30%, #1c1c20), #121215);
+  animation: cover-placeholder-in 320ms var(--ease-out);
+}
+
+/* A faint groove, the memory of a record sleeve. */
+.cover-placeholder::before {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: inset 0 0 0 6px rgb(255 255 255 / 0.025);
+}
+
+.cover-placeholder svg {
+  position: relative;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.35));
+}
+
+@keyframes cover-placeholder-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-placeholder {
+    animation: none;
+  }
+}

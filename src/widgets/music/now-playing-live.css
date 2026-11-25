@@ -1,0 +1,220 @@
+/*
+ * Live activity inside the notch. The notch is black in idle and peek
+ * whatever the theme, so these colors are fixed light values on purpose.
+ * Positions derive from --notch-w / --notch-h, which are animating during
+ * the morph: the content glides with the shape instead of jumping.
+ */
+.live {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--notch-w);
+  height: var(--notch-h);
+  translate: -50% 0;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.live[data-mode="open"] {
+  opacity: 0;
+  transition-duration: 160ms;
+}
+
+/* Folded: the light along the edge and the audio bars. Peeking at a new
+   track: cover, title and artist. Each set fades out as the other arrives. */
+.live__bars {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    opacity 260ms var(--ease-out) 80ms,
+    filter 260ms var(--ease-out) 80ms;
+}
+
+.live:not([data-mode="idle"]) .live__bars {
+  opacity: 0;
+  filter: blur(3px);
+  transition-delay: 0ms;
+  transition-duration: 140ms;
+}
+
+/* Scoped to .live so it outranks the equalizer's own paused dimming. */
+.live:not([data-mode="peek"]) .live__artwork,
+.live:not([data-mode="peek"]) .live__equalizer {
+  opacity: 0;
+}
+
+.live__artwork {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 11px;
+  color: rgb(243 242 239 / 0.7);
+  background: #1d1d21;
+  transform-origin: left center;
+  /* Idle: a 21px cover tucked in the left corner of the notch. */
+  transform: translateY(-50%) scale(0.5);
+  transition:
+    transform 300ms var(--ease-drawer),
+    border-radius 300ms var(--ease-drawer),
+    opacity 200ms var(--ease-out);
+}
+
+.live__artwork img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: live-artwork-arrive 320ms var(--ease-out);
+}
+
+.live[data-mode="peek"] .live__artwork {
+  transform: translateY(-50%) scale(1);
+}
+
+.live__text {
+  position: absolute;
+  top: 50%;
+  left: 66px;
+  right: 54px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  opacity: 0;
+  transform: translate(-6px, -50%);
+  filter: blur(4px);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 200ms var(--ease-out),
+    filter 160ms var(--ease-out);
+}
+
+.live[data-mode="peek"] .live__text {
+  opacity: 1;
+  transform: translate(0, -50%);
+  filter: blur(0);
+  transition-delay: 90ms;
+  transition-duration: 260ms;
+}
+
+.live__title,
+.live__artist {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.live__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f3f2ef;
+}
+
+.live__artist {
+  font-size: 12px;
+  color: rgb(243 242 239 / 0.58);
+}
+
+.live__equalizer {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%) scale(0.82);
+  transform-origin: right center;
+  transition:
+    transform 300ms var(--ease-drawer),
+    opacity 200ms var(--ease-out);
+}
+
+.live[data-mode="peek"] .live__equalizer {
+  transform: translate(-6px, -50%) scale(1.05);
+}
+
+@keyframes live-artwork-arrive {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+/* ---------- Equalizer (shared by the live activity and the panel) ---------- */
+
+.equalizer {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+
+.equalizer__bar {
+  width: 3px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--media-glow, var(--accent));
+  transform: scaleY(0.3);
+  transform-origin: bottom;
+  animation: equalizer-bounce 900ms ease-in-out infinite alternate;
+  animation-play-state: paused;
+}
+
+/* Different periods keep the bars from ever lining up. */
+.equalizer__bar:nth-child(1) {
+  animation-duration: 720ms;
+}
+
+.equalizer__bar:nth-child(2) {
+  animation-duration: 1040ms;
+  animation-delay: -360ms;
+}
+
+.equalizer__bar:nth-child(3) {
+  animation-duration: 860ms;
+  animation-delay: -620ms;
+}
+
+.equalizer__bar:nth-child(4) {
+  animation-duration: 1180ms;
+  animation-delay: -180ms;
+}
+
+.equalizer[data-playing="true"] .equalizer__bar {
+  animation-play-state: running;
+}
+
+.equalizer[data-playing="false"] {
+  opacity: 0.55;
+}
+
+@keyframes equalizer-bounce {
+  0% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(0.9);
+  }
+  100% {
+    transform: scaleY(0.45);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .equalizer__bar {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+
+  .live__artwork,
+  .live__text,
+  .live__equalizer,
+  .live__bars {
+    filter: none;
+    transition: opacity 150ms ease;
+  }
+}

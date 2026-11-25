@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "L8 Toolkit",
+  "version": "0.1.0",
+  "identifier": "com.l8.toolkit",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "notch",
+        "title": "L8 Notch",
+        "url": "index.html",
+        "width": 760,
+        "height": 540,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "maximizable": false,
+        "minimizable": false,
+        "visible": false,
+        "focus": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "createUpdaterArtifacts": true,
+    "publisher": "L8 Toolkit contributors",
+    "copyright": "Copyright (c) 2026 L8 Toolkit contributors. MIT License.",
+    "shortDescription": "Notch widgets for Windows: search and music",
+    "longDescription": "L8 Toolkit hosts small widgets in a virtual notch at the top of the screen: a launcher that searches apps, files and the web, and a music widget for whatever plays on the PC.",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEExMDU2RjE1MThEN0FGQTcKUldTbnI5Y1lGVzhGb2RxUS92WUhFcEZmeDBveE9XQk9KZEtuWGt1Z2VVUTZCY20xa3BKNGZMYUUK",
+      "endpoints": [
+        "https://github.com/leeBrown71309/L8Toolkit/releases/latest/download/latest.json"
+      ],
+      "requireSignedVersion": true,
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}
