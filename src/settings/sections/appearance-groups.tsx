@@ -4,7 +4,7 @@ import { useI18n } from "../../i18n/i18n-context";
 import type { MessageKey } from "../../i18n/messages/en";
 import { ACCENT_PRESETS, resolveAccent } from "../../shared/appearance";
 import type { AccentColor, AppearanceSettings, Material, SettingsSnapshot, ThemeMode } from "../../shared/types";
-import { SectionHeader, Segmented, SettingRow, SettingsGroup } from "../components/controls";
+import { Segmented, SettingRow, SettingsGroup } from "../components/controls";
 import type { SettingsController } from "../use-settings-controller";
 
 const THEMES: { value: ThemeMode; labelKey: MessageKey }[] = [
@@ -29,12 +29,13 @@ const ACCENTS: { value: AccentColor; labelKey: MessageKey }[] = [
   { value: "system", labelKey: "accent.system" },
 ];
 
-interface AppearanceSectionProps {
+interface AppearanceGroupsProps {
   snapshot: SettingsSnapshot;
   controller: SettingsController;
 }
 
-export function AppearanceSection({ snapshot, controller }: AppearanceSectionProps) {
+/** Theme, material and accent color: the look of the notch and of Settings, shown in General. */
+export function AppearanceGroups({ snapshot, controller }: AppearanceGroupsProps) {
   const { t } = useI18n();
   const { appearance } = snapshot.settings;
   const update = (patch: Partial<AppearanceSettings>) =>
@@ -42,8 +43,6 @@ export function AppearanceSection({ snapshot, controller }: AppearanceSectionPro
 
   return (
     <>
-      <SectionHeader title={t("appearance.title")} description={t("appearance.description")} />
-
       <SettingsGroup title={t("appearance.theme")}>
         <SettingRow
           label={t("appearance.mode")}

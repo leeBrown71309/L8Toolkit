@@ -4,6 +4,7 @@ import { useI18n } from "../../i18n/i18n-context";
 import type { LanguagePreference, SettingsSnapshot } from "../../shared/types";
 import { SectionHeader, Segmented, SettingRow, SettingsGroup, Toggle } from "../components/controls";
 import type { SettingsController } from "../use-settings-controller";
+import { AppearanceGroups } from "./appearance-groups";
 
 interface GeneralSectionProps {
   snapshot: SettingsSnapshot;
@@ -38,6 +39,8 @@ export function GeneralSection({ snapshot, controller }: GeneralSectionProps) {
           }
         />
       </SettingsGroup>
+
+      <AppearanceGroups snapshot={snapshot} controller={controller} />
 
       <SettingsGroup title={t("general.startup")}>
         <SettingRow

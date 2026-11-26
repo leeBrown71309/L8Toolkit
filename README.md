@@ -16,7 +16,7 @@ The notch idles as a small black shape against the bezel and pours open into a p
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/settings.png" alt="Settings, Appearance: theme, panel material and accent color" width="620" />
+  <img src="docs/screenshots/settings.png" alt="Settings, General: theme, panel material and accent color" width="620" />
 </p>
 
 Widgets:
@@ -129,7 +129,7 @@ Actions, also usable directly from the search field:
 
 ## Appearance
 
-Settings > Appearance: theme (system, dark, light), accent color (six presets or the Windows
+Settings > General: theme (system, dark, light), accent color (six presets or the Windows
 accent), and the panel material. The idle notch always stays black.
 
 | Material | How it is drawn |

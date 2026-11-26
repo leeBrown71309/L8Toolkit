@@ -4,7 +4,6 @@ import {
   type Icon,
   MagnifyingGlass,
   MusicNotesSimple,
-  Palette,
   SlidersHorizontal,
   TextAa,
   Timer,
@@ -18,7 +17,6 @@ import type { MessageKey } from "../i18n/messages/en";
 import { useApplyAppearance } from "../shared/appearance";
 import { backend, BACKEND_EVENTS } from "../shared/backend";
 import { useBackendEvent } from "../shared/use-backend-event";
-import { AppearanceSection } from "./sections/appearance-section";
 import { GeneralSection } from "./sections/general-section";
 import { MusicSection } from "./sections/music-section";
 import { QuickAccentSection } from "./sections/quick-accent-section";
@@ -31,7 +29,7 @@ import { useUpdateState } from "./use-update-state";
 
 import "./settings.css";
 
-type SectionKey = "general" | "spotlight" | "appearance" | "music" | "timer" | "recents" | "quickAccent" | "updates";
+type SectionKey = "general" | "spotlight" | "music" | "timer" | "recents" | "quickAccent" | "updates";
 
 interface NavigationItem {
   key: SectionKey;
@@ -41,7 +39,6 @@ interface NavigationItem {
 
 const NAVIGATION: NavigationItem[] = [
   { key: "spotlight", labelKey: "nav.spotlight", icon: MagnifyingGlass },
-  { key: "appearance", labelKey: "nav.appearance", icon: Palette },
   { key: "music", labelKey: "nav.music", icon: MusicNotesSimple },
   { key: "timer", labelKey: "nav.timer", icon: Timer },
   { key: "recents", labelKey: "nav.recents", icon: ClockCounterClockwise },
@@ -136,7 +133,6 @@ export function SettingsApp() {
               {section === "spotlight" && (
                 <SpotlightSection snapshot={snapshot} controller={controller} />
               )}
-              {section === "appearance" && <AppearanceSection snapshot={snapshot} controller={controller} />}
               {section === "music" && <MusicSection snapshot={snapshot} controller={controller} />}
               {section === "timer" && <TimerSection snapshot={snapshot} controller={controller} />}
               {section === "recents" && <RecentsSection snapshot={snapshot} controller={controller} />}

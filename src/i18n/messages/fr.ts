@@ -145,7 +145,6 @@ export const fr: Record<MessageKey, string> = {
   "settings.loading": "Chargement des paramètres",
   "settings.loadFailed": "Impossible de charger les paramètres : {reason}",
   "nav.spotlight": "Recherche",
-  "nav.appearance": "Apparence",
   "nav.music": "Musique",
   "nav.general": "Général",
 
@@ -181,8 +180,6 @@ export const fr: Record<MessageKey, string> = {
   "spotlight.index.summary": "{files} fichiers et dossiers, {apps} applications",
   "spotlight.index.rebuild": "Reconstruire",
 
-  "appearance.title": "Apparence",
-  "appearance.description": "L'aspect de l'encoche et de cette fenêtre. Les changements s'appliquent immédiatement.",
   "appearance.theme": "Thème",
   "appearance.mode": "Mode",
   "appearance.mode.description": "Système suit le mode clair ou sombre de Windows.",
@@ -232,7 +229,7 @@ export const fr: Record<MessageKey, string> = {
     "La vague de progression, la lumière et le halo du panneau prennent les couleurs de la pochette. Désactivé, ils restent neutres : votre couleur d'accentuation est réservée à la Recherche.",
 
   "general.title": "Général",
-  "general.description": "L8 Toolkit vit dans la zone de notification et héberge vos widgets d'encoche.",
+  "general.description": "Langue, apparence, démarrage et l'application elle-même. Les changements s'appliquent immédiatement.",
   "general.language": "Langue",
   "general.language.label": "Langue de l'interface",
   "general.language.description": "Système suit la langue d'affichage de Windows.",

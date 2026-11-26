@@ -147,7 +147,6 @@ export const en = {
   "settings.loading": "Loading settings",
   "settings.loadFailed": "Cannot load settings: {reason}",
   "nav.spotlight": "Search",
-  "nav.appearance": "Appearance",
   "nav.music": "Music",
   "nav.general": "General",
 
@@ -180,8 +179,6 @@ export const en = {
   "spotlight.index.summary": "{files} files and folders, {apps} apps",
   "spotlight.index.rebuild": "Rebuild",
 
-  "appearance.title": "Appearance",
-  "appearance.description": "How the notch and this window look. Changes apply instantly.",
   "appearance.theme": "Theme",
   "appearance.mode": "Mode",
   "appearance.mode.description": "System follows the Windows light or dark setting.",
@@ -228,7 +225,7 @@ export const en = {
     "The progress wave, the light and the panel glow take the colors of the artwork. Off, they stay neutral: your accent color is kept for Search.",
 
   "general.title": "General",
-  "general.description": "L8 Toolkit lives in the tray and hosts your notch widgets.",
+  "general.description": "Language, look, startup and the app itself. Changes apply instantly.",
   "general.language": "Language",
   "general.language.label": "Interface language",
   "general.language.description": "System follows the Windows display language.",
