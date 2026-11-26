@@ -59,6 +59,8 @@ export const fr: Record<MessageKey, string> = {
 
   // Noms des touches tels qu'imprimés sur les claviers français
   "keys.delete": "Suppr",
+  "keys.home": "Début",
+  "keys.end": "Fin",
   "keys.shift": "Maj",
   "keys.space": "Espace",
 
@@ -109,7 +111,6 @@ export const fr: Record<MessageKey, string> = {
   "timer.next.ready": "Ensuite : {phase}, lancez-la quand vous voulez",
 
   // Récents
-  "recents.hint": "Cliquez pour recopier, glissez vers n'importe quelle app",
   "recents.cardHint": "Cliquez pour copier, glissez vers une autre app",
   "recents.list": "Éléments récents",
   "recents.clear": "Tout effacer",
@@ -293,6 +294,16 @@ export const fr: Record<MessageKey, string> = {
   "recentsSettings.clear.description": "Retire tous les éléments et les images enregistrées.",
   "recentsSettings.clear.button": "Tout effacer",
   "recentsSettings.clear.done": "Récents effacé",
+  "recentsSettings.shortcuts": "Clavier",
+  "recentsSettings.shortcuts.label": "Dans l'onglet Récents",
+  "recentsSettings.shortcuts.description": "Alt+4 y mène quand l'encoche est ouverte.",
+  "recentsSettings.shortcut.select": "Choisir un élément",
+  "recentsSettings.shortcut.ends": "Aller au premier ou au dernier élément",
+  "recentsSettings.shortcut.copy": "Le recopier",
+  "recentsSettings.shortcut.open": "Ouvrir une image ou un fichier",
+  "recentsSettings.shortcut.remove": "Le retirer de Récents",
+  "recentsSettings.shortcut.drag": "Glisser une carte",
+  "recentsSettings.shortcut.dragAction": "La déposer dans une autre app",
 
   "nav.quickAccent": "Accents rapides",
   "quickAccent.title": "Accents rapides",

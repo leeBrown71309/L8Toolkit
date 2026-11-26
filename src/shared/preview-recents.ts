@@ -43,6 +43,18 @@ export function createPreviewRecents(emit: (event: string, payload: unknown) => 
       textLength: 78,
       sourceApp: "WindowsTerminal",
     }),
+    item({
+      id: "invoice",
+      kind: "files",
+      createdAtMs: now - 6 * MINUTE_MS,
+      files: [
+        {
+          path: "C:\\Users\\Preview\\Downloads\\facture-WH-60391934-2026-11-mensuel.pdf",
+          name: "facture-WH-60391934-2026-11-mensuel.pdf",
+          exists: true,
+        },
+      ],
+    }),
     item({ id: "secret", kind: "text", createdAtMs: now - 14 * MINUTE_MS, textLength: 20, sensitive: true, sourceApp: "Bitwarden" }),
     item({
       id: "files",

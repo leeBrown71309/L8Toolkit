@@ -58,8 +58,9 @@ catalogs are type-checked so a missing translation does not compile. Hovering a 
 the keyboard shortcut opens Search. In Music: `Space` play/pause, `←` `→` seek, `Ctrl+←` `Ctrl+→`
 previous/next, click the cover or the app name to bring the player to the front. In Timer: `Space`
 or `Enter` start/pause, `↑` `↓` adjust (or add/remove a minute while running), `Delete` stops,
-`Ctrl+→` skips to the next Pomodoro phase. In Recents: `←` `→` select, `Enter` copies, `Ctrl+Enter`
-opens, `Delete` removes.
+`Ctrl+→` skips to the next Pomodoro phase. In Recents: `←` `→` select (`Home` / `End` jump to the
+ends, the mouse wheel scrolls), `Enter` copies, `Ctrl+Enter` opens, `Delete` removes; Settings › Recents lists
+them.
 
 ## Install
 

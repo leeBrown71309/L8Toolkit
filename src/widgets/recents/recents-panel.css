@@ -12,15 +12,10 @@
 .recents__bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   min-height: 24px;
   padding: 0 20px;
-}
-
-.recents__hint {
-  font-size: 11.5px;
-  color: var(--text-3);
 }
 
 .recents__clear {
@@ -100,10 +95,24 @@
   transition-duration: 120ms;
 }
 
-.recent-card[aria-selected="true"] {
-  box-shadow:
-    inset 0 1px 0 var(--highlight),
-    inset 0 0 0 1.5px var(--accent-line);
+/*
+ * Selection ring: drawn on a layer above the content, so a screenshot that
+ * fills its card shows it as clearly as a text or a file does.
+ */
+.recent-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2px var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.recent-card[aria-selected="true"]::before {
+  opacity: 1;
 }
 
 .recent-card[data-missing="true"] {
@@ -115,6 +124,8 @@
   position: relative;
   display: grid;
   flex: 1;
+  /* A long unbroken name must not widen the track and push the content aside. */
+  grid-template-columns: minmax(0, 1fr);
   min-height: 0;
   place-items: center;
   color: var(--text-3);
@@ -175,21 +186,25 @@
   font-size: 10.5px;
 }
 
+/* Files read like the text cards: icon on top, the start of the name below. */
 .recent-card__files {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 0 10px;
+  align-items: flex-start;
+  align-self: start;
+  justify-self: stretch;
+  gap: 7px;
+  min-width: 0;
+  padding: 11px 11px 0;
 }
 
 .recent-card__file-icon {
   position: relative;
   display: grid;
+  flex: none;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
 }
 
 .recent-card__file-icon img {
@@ -209,13 +224,18 @@
   box-shadow: 0 0 0 2px var(--ink-2);
 }
 
+/* Two lines are enough to tell documents apart; the full name is in the tooltip. */
 .recent-card__file-name {
+  display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.35;
   color: var(--text-1);
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .recent-card__meta {
@@ -245,7 +265,7 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   gap: 4px;
   opacity: 0;
@@ -290,7 +310,7 @@
 .recent-card__copied {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;

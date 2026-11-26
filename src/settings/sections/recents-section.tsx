@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 
 import { useI18n } from "../../i18n/i18n-context";
 import { backend } from "../../shared/backend";
+import { Keycap } from "../../shared/keycap";
 import type { RecentsSettings, SettingsSnapshot } from "../../shared/types";
 import { SectionHeader, SettingRow, SettingsGroup, Stepper, Toggle } from "../components/controls";
+import { RECENTS_SHORTCUTS, shortcutKeyLabel } from "../../widgets/recents/recents-shortcuts";
 import type { SettingsController } from "../use-settings-controller";
 
 interface RecentsSectionProps {
@@ -77,6 +79,32 @@ export function RecentsSection({ snapshot, controller }: RecentsSectionProps) {
             />
           }
         />
+      </SettingsGroup>
+
+      <SettingsGroup title={t("recentsSettings.shortcuts")}>
+        <SettingRow
+          label={t("recentsSettings.shortcuts.label")}
+          description={t("recentsSettings.shortcuts.description")}
+          disabled={!recents.enabled}
+        >
+          <dl className="shortcut-table">
+            {RECENTS_SHORTCUTS.map((shortcut) => (
+              <div key={shortcut.descriptionKey} className="shortcut-table__row">
+                <dt className="shortcut-table__keys">
+                  {shortcut.keys.map((key) => {
+                    const label = shortcutKeyLabel(key, t);
+                    return <Keycap key={label}>{label}</Keycap>;
+                  })}
+                </dt>
+                <dd className="shortcut-table__action">{t(shortcut.descriptionKey)}</dd>
+              </div>
+            ))}
+            <div className="shortcut-table__row">
+              <dt className="shortcut-table__keys shortcut-table__gesture">{t("recentsSettings.shortcut.drag")}</dt>
+              <dd className="shortcut-table__action">{t("recentsSettings.shortcut.dragAction")}</dd>
+            </div>
+          </dl>
+        </SettingRow>
       </SettingsGroup>
 
       <SettingsGroup title={t("recentsSettings.privacy")}>

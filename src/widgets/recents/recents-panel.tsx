@@ -21,6 +21,8 @@ import { isDragGesture, relativeAge } from "./recents-time";
 import "./recents-panel.css";
 
 const COPIED_FEEDBACK_MS = 1100;
+/** One row of cards: up/down move like left/right. */
+const STEP_KEYS: Record<string, number> = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
 const ERROR_DURATION_MS = 3200;
 /** Fake password length: the real length is never hinted. */
 const MASK = "••••••••••";
@@ -44,9 +46,11 @@ export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged, 
   const { t } = useI18n();
   const rootRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
-  const [selected, setSelected] = useState(0);
+  const [selectedIndex, setSelected] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Removing the last card must not leave the selection past the end.
+  const selected = Math.max(0, Math.min(selectedIndex, items.length - 1));
 
   useEffect(() => {
     if (isActive) rootRef.current?.focus({ preventScroll: true });
@@ -58,6 +62,26 @@ export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged, 
     setSelected(0);
     stripRef.current?.scrollTo({ left: 0 });
   }, [firstId]);
+
+  // The selected card stays in view, whether it moved by key or by click.
+  useEffect(() => {
+    stripRef.current?.children[selected]?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [selected]);
+
+  // The strip only scrolls sideways: a plain mouse wheel scrolls it too
+  // (no Shift needed). Native listener, React's wheel events are passive.
+  const hasItems = items.length > 0;
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const handleWheel = (event: WheelEvent) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      strip.scrollBy({ left: event.deltaY });
+    };
+    strip.addEventListener("wheel", handleWheel, { passive: false });
+    return () => strip.removeEventListener("wheel", handleWheel);
+  }, [hasItems]);
 
   useEffect(() => {
     if (!copiedId) return;
@@ -97,13 +121,18 @@ export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged, 
       onClose(true);
       return;
     }
-    const current = items[Math.min(selected, items.length - 1)];
+    const current = items[selected];
+    // Alt+arrows and Alt+digits switch widgets.
     if (event.altKey || !current) return;
-    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+    const step = STEP_KEYS[event.key];
+    if (step !== undefined) {
       event.preventDefault();
-      const next = Math.max(0, Math.min(items.length - 1, selected + (event.key === "ArrowRight" ? 1 : -1)));
-      setSelected(next);
-      stripRef.current?.children[next]?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      // From the latest value: key repeat can fire twice before a render.
+      const last = items.length - 1;
+      setSelected((index) => Math.max(0, Math.min(last, Math.min(index, last) + step)));
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setSelected(event.key === "Home" ? 0 : items.length - 1);
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (event.ctrlKey) {
@@ -119,18 +148,24 @@ export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged, 
 
   return (
     <div ref={rootRef} className="recents" tabIndex={-1} onKeyDown={handleKeyDown} data-drop={dropActive}>
-      <div className="recents__bar">
-        <span className="recents__hint">{t("recents.hint")}</span>
-        {items.length > 0 && (
+      {/* Kept bare on purpose: the keyboard shortcuts are listed in Settings › Recents. */}
+      {items.length > 0 && (
+        <div className="recents__bar">
           <button type="button" className="recents__clear" onClick={() => run(backend.recentsClear())}>
             {t("recents.clear")}
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {items.length === 0 ? (
         <EmptyState />
       ) : (
-        <div ref={stripRef} className="recents__strip" role="listbox" aria-label={t("recents.list")}>
+        <div
+          ref={stripRef}
+          className="recents__strip"
+          role="listbox"
+          aria-label={t("recents.list")}
+          aria-activedescendant={items[selected] ? `recent-${items[selected].id}` : undefined}
+        >
           {items.map((item, index) => (
             <RecentCard
               key={item.id}
@@ -203,6 +238,7 @@ function RecentCard({ item, selected, copied, onCopy, onOpen, onRemove, onDragSt
   const label = cardLabel(item, t);
   return (
     <div
+      id={`recent-${item.id}`}
       className="recent-card"
       role="option"
       aria-selected={selected}
@@ -278,13 +314,16 @@ function FilesContent({ item }: { item: RecentView }) {
   const first = item.files[0];
   const icon = useShellIcon(first?.exists ? first.path : null);
   const extra = item.files.length - 1;
+  const name = first?.exists === false ? t("recents.missing") : first?.name;
   return (
     <div className="recent-card__files">
       <span className="recent-card__file-icon">
-        {icon ? <img src={icon} width={32} height={32} alt="" draggable={false} /> : <File size={26} />}
+        {icon ? <img src={icon} width={28} height={28} alt="" draggable={false} /> : <File size={24} />}
         {extra > 0 && <span className="recent-card__file-count">+{extra}</span>}
       </span>
-      <span className="recent-card__file-name">{first?.exists === false ? t("recents.missing") : first?.name}</span>
+      <span className="recent-card__file-name" title={first?.name}>
+        {name}
+      </span>
     </div>
   );
 }

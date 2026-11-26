@@ -61,6 +61,8 @@ export const en = {
 
   // Key names as printed on keyboards
   "keys.delete": "Del",
+  "keys.home": "Home",
+  "keys.end": "End",
   "keys.shift": "Shift",
   "keys.space": "Space",
 
@@ -111,7 +113,6 @@ export const en = {
   "timer.next.ready": "Next: {phase}, start it when ready",
 
   // Recents
-  "recents.hint": "Click to copy again, drag into any app",
   "recents.cardHint": "Click to copy, drag into another app",
   "recents.list": "Recent items",
   "recents.clear": "Clear all",
@@ -289,6 +290,16 @@ export const en = {
   "recentsSettings.clear.description": "Removes every item and the saved images.",
   "recentsSettings.clear.button": "Clear all",
   "recentsSettings.clear.done": "Recents cleared",
+  "recentsSettings.shortcuts": "Keyboard",
+  "recentsSettings.shortcuts.label": "In the Recents tab",
+  "recentsSettings.shortcuts.description": "Alt+4 switches to Recents while the notch is open.",
+  "recentsSettings.shortcut.select": "Choose an item",
+  "recentsSettings.shortcut.ends": "Jump to the first or the last item",
+  "recentsSettings.shortcut.copy": "Copy it again",
+  "recentsSettings.shortcut.open": "Open an image or a file",
+  "recentsSettings.shortcut.remove": "Remove it from Recents",
+  "recentsSettings.shortcut.drag": "Drag a card",
+  "recentsSettings.shortcut.dragAction": "Drop it into another app",
 
   "nav.quickAccent": "Quick Accent",
   "quickAccent.title": "Quick Accent",
