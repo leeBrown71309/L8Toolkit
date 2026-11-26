@@ -141,6 +141,35 @@ pub struct AppSettings {
     pub music: MusicSettings,
     pub quick_accent: QuickAccentSettings,
     pub timer: TimerSettings,
+    pub recents: RecentsSettings,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct RecentsSettings {
+    pub enabled: bool,
+    /// How many items are kept.
+    pub limit: u32,
+    /// The notch briefly shows a new screenshot.
+    pub screenshot_peek: bool,
+    /// Copies from password managers are kept (never shown in clear).
+    pub keep_password_manager_items: bool,
+}
+
+impl Default for RecentsSettings {
+    fn default() -> Self {
+        Self { enabled: true, limit: 10, screenshot_peek: true, keep_password_manager_items: true }
+    }
+}
+
+pub const RECENTS_MIN_LIMIT: u32 = 3;
+pub const RECENTS_MAX_LIMIT: u32 = 50;
+
+impl RecentsSettings {
+    pub fn sanitized(mut self) -> Self {
+        self.limit = self.limit.clamp(RECENTS_MIN_LIMIT, RECENTS_MAX_LIMIT);
+        self
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -215,6 +244,7 @@ impl Default for AppSettings {
             music: MusicSettings::default(),
             quick_accent: QuickAccentSettings::default(),
             timer: TimerSettings::default(),
+            recents: RecentsSettings::default(),
         }
     }
 }

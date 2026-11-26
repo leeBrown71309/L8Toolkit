@@ -18,6 +18,7 @@ mod media;
 mod notch;
 mod platform;
 mod quick_accent;
+mod recents;
 mod search;
 mod settings;
 mod settings_sync;
@@ -40,6 +41,7 @@ use crate::icons::IconService;
 use crate::media::MediaService;
 use crate::notch::NotchController;
 use crate::quick_accent::QuickAccentService;
+use crate::recents::RecentsService;
 use crate::search::SearchService;
 use crate::settings::SettingsStore;
 use crate::timer::TimerService;
@@ -48,6 +50,7 @@ use crate::usage::UsageStore;
 
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const USAGE_FILE_NAME: &str = "usage.json";
+const RECENTS_FOLDER_NAME: &str = "recents";
 const TOGGLE_SEARCH_ARGUMENT: &str = "--toggle-search";
 
 pub fn run() {
@@ -100,6 +103,14 @@ pub fn run() {
             commands::timer_state,
             commands::timer_command,
             commands::notch_set_layout,
+            commands::notch_open_for_drop,
+            commands::recents_list,
+            commands::recents_copy,
+            commands::recents_open,
+            commands::recents_drag,
+            commands::recents_remove,
+            commands::recents_clear,
+            commands::recents_add_files,
             commands::settings_window_ready,
             commands::get_settings,
             commands::update_settings,
@@ -136,6 +147,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     app.manage(UpdateService::default());
     app.manage(QuickAccentService::default());
     app.manage(TimerService::default());
+    app.manage(RecentsService::load(data_dir.join(RECENTS_FOLDER_NAME)));
 
     tray::create(app)?;
     notch::initialize(app)?;
@@ -146,6 +158,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     audio::start(app);
     updates::spawn_periodic_check(app);
     timer::start_watcher(app);
+    recents::start(app);
     log::info!("L8 Toolkit {} ready", app.package_info().version);
     Ok(())
 }

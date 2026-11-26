@@ -6,6 +6,7 @@ use tauri::{AppHandle, Manager, State};
 use crate::actions::{self, ActionOutcome, ExecuteAction};
 use crate::audio::{self, AudioVisualizer};
 use crate::quick_accent::{self, AccentLanguage, AccentPreviewRow};
+use crate::recents::{self, RecentView, RecentsService};
 use crate::icons::IconService;
 use crate::i18n::{tr, Text};
 use crate::indexer;
@@ -183,4 +184,50 @@ pub fn timer_command(app: AppHandle, request: TimerRequest) -> TimerSnapshot {
 #[tauri::command]
 pub fn notch_set_layout(controller: State<'_, NotchController>, bubble: bool) {
     controller.set_bubble(bubble);
+}
+
+/// Something is dragged onto the notch: open it on Recents to receive it.
+#[tauri::command]
+pub fn notch_open_for_drop(app: AppHandle) {
+    notch::open(&app, notch::OpenSource::Drop);
+}
+
+#[tauri::command]
+pub fn recents_list(recents: State<'_, RecentsService>) -> Vec<RecentView> {
+    recents.views()
+}
+
+/// Puts an item back on the clipboard.
+#[tauri::command]
+pub async fn recents_copy(app: AppHandle, id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || recents::copy(&app, &id))
+        .await
+        .map_err(|error| format!("Copy task failed: {error}"))?
+}
+
+#[tauri::command]
+pub fn recents_open(app: AppHandle, id: String) -> Result<(), String> {
+    recents::open(&app, &id)
+}
+
+/// Drags an item into another app (called while the mouse button is held).
+#[tauri::command]
+pub fn recents_drag(app: AppHandle, id: String) -> Result<(), String> {
+    recents::drag(&app, &id)
+}
+
+#[tauri::command]
+pub fn recents_remove(app: AppHandle, id: String) {
+    recents::remove(&app, &id);
+}
+
+#[tauri::command]
+pub fn recents_clear(app: AppHandle) {
+    recents::clear(&app);
+}
+
+/// Files dropped on the notch (the shelf).
+#[tauri::command]
+pub fn recents_add_files(app: AppHandle, paths: Vec<String>) {
+    recents::add_files(&app, paths);
 }

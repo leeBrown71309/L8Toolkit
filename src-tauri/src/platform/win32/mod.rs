@@ -1,6 +1,7 @@
 //! Windows implementation of the platform layer.
 
 mod apps;
+mod clipboard;
 mod com;
 mod file_actions;
 mod icons;
@@ -15,6 +16,10 @@ mod system_colors;
 mod window;
 
 pub use apps::enumerate_installed_apps;
+pub use clipboard::{
+    mark_own_clipboard_write, protect_for_user, start_drag_files, start_drag_text, unprotect_for_user, watch_clipboard,
+    write_clipboard_image, write_clipboard_text,
+};
 pub use com::enter_com;
 pub use file_actions::{copy_files_to_clipboard, move_to_recycle_bin, open_in_terminal, open_with_dialog, show_properties};
 pub use icons::{extract_icon_rgba, extract_thumbnail_rgba};
@@ -29,6 +34,6 @@ pub use screen::{capture_screen_rgba, desktop_wallpaper_path};
 pub use shell::{lock_workstation, reveal_in_file_manager, shell_open};
 pub use system_colors::{system_accent_color, system_prefers_light};
 pub use window::{
-    cursor_position, force_foreground, foreground_window, foreground_window_class, fullscreen_foreground_rect,
+    cursor_position, force_foreground, left_button_down, foreground_window, foreground_window_class, fullscreen_foreground_rect,
     restore_foreground, show_without_activation,
 };

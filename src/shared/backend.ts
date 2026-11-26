@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 import { createPreviewBackend } from "./preview-backend";
 import type {
@@ -17,6 +18,8 @@ import type {
   AccentPreviewRow,
   TimerRequest,
   TimerSnapshot,
+  RecentView,
+  FileDragEvent,
 } from "./types";
 
 export const BACKEND_EVENTS = {
@@ -32,6 +35,9 @@ export const BACKEND_EVENTS = {
   timerState: "timer:state",
   /** A countdown or a Pomodoro phase ended. */
   timerFinished: "timer:finished",
+  recentsChanged: "recents:changed",
+  /** A screen capture was just added to Recents. */
+  recentsScreenshot: "recents:screenshot",
   /** Asks the settings window to show a section (the tray's "Install update"). */
   settingsNavigate: "settings:navigate",
 } as const;
@@ -65,6 +71,20 @@ export interface Backend {
   timerCommand(request: TimerRequest): Promise<TimerSnapshot>;
   /** The folded notch shows a second activity in a bubble (its hover zone). */
   notchSetLayout(bubble: boolean): Promise<void>;
+  /** Files are dragged onto the idle notch: open it to receive them. */
+  notchOpenForDrop(): Promise<void>;
+  recentsList(): Promise<RecentView[]>;
+  /** Puts an item back on the clipboard (and moves it to the top). */
+  recentsCopy(id: string): Promise<void>;
+  recentsOpen(id: string): Promise<void>;
+  /** Starts dragging an item into another app; call while the button is held. */
+  recentsDrag(id: string): Promise<void>;
+  recentsRemove(id: string): Promise<void>;
+  recentsClear(): Promise<void>;
+  /** Files dropped on the notch (the shelf). */
+  recentsAddFiles(paths: string[]): Promise<void>;
+  /** Files dragged over this window. */
+  onFileDrag(handler: (event: FileDragEvent) => void): Promise<Unlisten>;
   getSettings(): Promise<SettingsSnapshot>;
   updateSettings(settings: AppSettings): Promise<SettingsSnapshot>;
   rebuildIndex(): Promise<void>;
@@ -97,6 +117,19 @@ const tauriBackend: Backend = {
   timerState: () => invoke("timer_state"),
   timerCommand: (request) => invoke("timer_command", { request }),
   notchSetLayout: (bubble) => invoke("notch_set_layout", { bubble }),
+  notchOpenForDrop: () => invoke("notch_open_for_drop"),
+  recentsList: () => invoke("recents_list"),
+  recentsCopy: (id) => invoke("recents_copy", { id }),
+  recentsOpen: (id) => invoke("recents_open", { id }),
+  recentsDrag: (id) => invoke("recents_drag", { id }),
+  recentsRemove: (id) => invoke("recents_remove", { id }),
+  recentsClear: () => invoke("recents_clear"),
+  recentsAddFiles: (paths) => invoke("recents_add_files", { paths }),
+  onFileDrag: (handler) =>
+    getCurrentWebview().onDragDropEvent(({ payload }) => {
+      if (payload.type === "enter" || payload.type === "drop") handler({ type: payload.type, paths: payload.paths });
+      else handler({ type: payload.type });
+    }),
   getSettings: () => invoke("get_settings"),
   updateSettings: (settings) => invoke("update_settings", { settings }),
   rebuildIndex: () => invoke("rebuild_index"),

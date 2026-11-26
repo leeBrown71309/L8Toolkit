@@ -121,6 +121,40 @@ pub fn copy_files_to_clipboard(_paths: &[String]) -> Result<(), String> {
     unsupported()
 }
 
+pub fn watch_clipboard(_handler: crate::platform::ClipboardHandler) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn write_clipboard_text(_text: &str) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn write_clipboard_image(_dib: &[u8], _png: &[u8]) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn mark_own_clipboard_write() {}
+
+pub fn start_drag_files(_paths: &[String]) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn start_drag_text(_text: &str) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn protect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    unsupported()
+}
+
+pub fn unprotect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    unsupported()
+}
+
+pub fn left_button_down() -> bool {
+    false
+}
+
 pub fn open_in_terminal(_directory: &str) -> Result<(), String> {
     unsupported()
 }

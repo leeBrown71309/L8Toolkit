@@ -1,0 +1,424 @@
+/*
+ * The Recents tab: a row of cards, newest on the left, like things laid on a
+ * shelf. Cards are physical objects: they lift on hover and can be picked up
+ * (dragged) into another app.
+ */
+.recents {
+  position: relative;
+  padding: 0 0 14px;
+  outline: none;
+}
+
+.recents__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+  padding: 0 20px;
+}
+
+.recents__hint {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.recents__clear {
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 140ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recents__clear:hover {
+    color: var(--text-1);
+    background: var(--fill-2);
+  }
+}
+
+.recents__clear:active {
+  transform: scale(0.96);
+}
+
+/* ---------- Strip ---------- */
+
+.recents__strip {
+  display: flex;
+  gap: 10px;
+  /* Room for the hover lift and the selection ring. */
+  padding: 8px 20px 4px;
+  overflow-x: auto;
+  scroll-padding-inline: 20px;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent 0, black 14px, black calc(100% - 22px), transparent);
+}
+
+.recent-card {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 128px;
+  height: 108px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--fill-2);
+  box-shadow:
+    inset 0 1px 0 var(--highlight),
+    inset 0 0 0 1px var(--line-1);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition:
+    transform 220ms var(--ease-out),
+    box-shadow 220ms var(--ease-out),
+    background-color 150ms ease;
+  animation: recent-card-in 320ms var(--ease-out) backwards;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recent-card:hover {
+    transform: translateY(-2px);
+    background: var(--fill-3);
+    box-shadow:
+      inset 0 1px 0 var(--highlight),
+      inset 0 0 0 1px var(--line-2),
+      0 10px 22px -12px var(--drop-shadow);
+  }
+}
+
+.recent-card:active {
+  cursor: grabbing;
+  transform: scale(0.97);
+  transition-duration: 120ms;
+}
+
+.recent-card[aria-selected="true"] {
+  box-shadow:
+    inset 0 1px 0 var(--highlight),
+    inset 0 0 0 1.5px var(--accent-line);
+}
+
+.recent-card[data-missing="true"] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.recent-card__body {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  place-items: center;
+  color: var(--text-3);
+}
+
+/* Images fill the card; the meta line floats on a shade at the bottom. */
+.recent-card[data-kind="image"] .recent-card__body {
+  position: absolute;
+  inset: 0;
+}
+
+.recent-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.recent-card[data-kind="image"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 40px;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.6), transparent);
+  pointer-events: none;
+}
+
+.recent-card__text {
+  display: -webkit-box;
+  align-self: start;
+  justify-self: stretch;
+  margin: 0;
+  padding: 10px 11px 0;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-1);
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.recent-card__secret {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+}
+
+.recent-card__mask {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+
+.recent-card__secret-label {
+  font-size: 10.5px;
+}
+
+.recent-card__files {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.recent-card__file-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+}
+
+.recent-card__file-icon img {
+  pointer-events: none;
+}
+
+.recent-card__file-count {
+  position: absolute;
+  right: -10px;
+  bottom: -2px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--ink-4);
+  box-shadow: 0 0 0 2px var(--ink-2);
+}
+
+.recent-card__file-name {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+  color: var(--text-1);
+}
+
+.recent-card__meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px 8px;
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+
+.recent-card[data-kind="image"] .recent-card__meta {
+  margin-top: auto;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.recent-card__meta-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Open / remove: small round buttons that appear on hover. */
+.recent-card__actions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition:
+    opacity 150ms ease,
+    transform 180ms var(--ease-out);
+}
+
+.recent-card:hover .recent-card__actions,
+.recent-card:focus-within .recent-card__actions {
+  opacity: 1;
+  transform: none;
+}
+
+.recent-card__action {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: #f3f2ef;
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 140ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .recent-card__action:hover {
+    background: rgb(0 0 0 / 0.78);
+  }
+}
+
+.recent-card__action:active {
+  transform: scale(0.9);
+}
+
+/* "Copied": a quick confirmation over the card. */
+.recent-card__copied {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent-ink, #ffffff);
+  background: color-mix(in srgb, var(--accent) 88%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms var(--ease-out);
+}
+
+.recent-card__copied[data-visible="true"] {
+  opacity: 1;
+  transition-duration: 120ms;
+}
+
+.recent-card__copied svg {
+  transform: scale(0.8);
+  transition: transform 260ms var(--ease-liquid);
+}
+
+.recent-card__copied[data-visible="true"] svg {
+  transform: none;
+}
+
+/* ---------- Drop zone (files dragged onto the notch) ---------- */
+
+.recents__drop {
+  position: absolute;
+  inset: 4px 14px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  border-radius: 16px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--notch-surface));
+  outline: 1.5px dashed var(--accent-line);
+  outline-offset: -1.5px;
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+
+.recents[data-drop="true"] .recents__drop {
+  opacity: 1;
+  transform: none;
+}
+
+.recents__drop-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.recents__drop-text {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.recents__error {
+  margin: 8px 20px 0;
+  font-size: 11.5px;
+  color: var(--text-1);
+  animation: recent-card-in 200ms var(--ease-out);
+}
+
+/* ---------- Empty ---------- */
+
+.recents-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px 6px;
+}
+
+.recents-empty__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-row);
+  color: var(--text-3);
+  background: var(--fill-2);
+  box-shadow:
+    inset 0 1px 0 var(--highlight),
+    inset 0 0 0 1px var(--line-1);
+}
+
+.recents-empty__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.recents-empty__text {
+  max-width: 56ch;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+
+@keyframes recent-card-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.97);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recent-card,
+  .recents__error {
+    animation: none;
+  }
+
+  .recent-card,
+  .recent-card__actions,
+  .recents__drop,
+  .recent-card__copied svg {
+    transform: none;
+    transition: opacity 150ms ease;
+  }
+}

@@ -1,4 +1,4 @@
-import { GearSix, type Icon, MagnifyingGlass, MusicNotesSimple, Timer } from "@phosphor-icons/react";
+import { ClockCounterClockwise, GearSix, type Icon, MagnifyingGlass, MusicNotesSimple, Timer } from "@phosphor-icons/react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { useI18n } from "../../i18n/i18n-context";
@@ -12,6 +12,7 @@ const TAB_META: Record<WidgetTab, { labelKey: MessageKey; icon: Icon }> = {
   search: { labelKey: "widget.search", icon: MagnifyingGlass },
   music: { labelKey: "widget.music", icon: MusicNotesSimple },
   timer: { labelKey: "widget.timer", icon: Timer },
+  recents: { labelKey: "widget.recents", icon: ClockCounterClockwise },
 };
 
 interface IndicatorBox {

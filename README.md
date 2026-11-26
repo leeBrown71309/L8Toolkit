@@ -36,6 +36,13 @@ Widgets:
   folded notch shows the time left and its light fills as time passes; a Windows notification
   and a short peek announce the end (`src-tauri/src/timer/`).
 
+- **Recents**: the last texts, images, screenshots and files copied (10 by default, kept across
+  restarts), plus files dropped on the notch (a shelf: drag a file onto the notch, switch windows,
+  drag it out later). Click an item to copy it again, drag it into any app, or open it. A new
+  screenshot briefly shows in the notch. Copies from password managers (Bitwarden, 1Password,
+  KeePass...) are kept but never shown in clear, and are encrypted with DPAPI on disk; a setting
+  leaves them out entirely (`src-tauri/src/recents/`).
+
 When music plays and a timer runs at the same time, the activity you looked at last takes the
 notch and the other one moves to a small bubble beside it, with its progress as a ring. Resting the
 pointer on the bubble opens the panel on that activity.
@@ -44,14 +51,15 @@ While a fullscreen app (a game, a video) has the focus, the search shortcut is r
 Quick Accent lets every key through, so playing never opens the notch by accident (Settings ›
 General › Games and fullscreen, `src-tauri/src/fullscreen_pause.rs`).
 
-Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`.
+Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` to `Ctrl+4`.
 The interface is available in English and French (Settings > General > Language; "System" follows
 Windows). Strings live in `src/i18n/messages/` (web) and `src-tauri/src/i18n/` (Rust); both
 catalogs are type-checked so a missing translation does not compile. Hovering a notch that is playing opens Music;
 the keyboard shortcut opens Search. In Music: `Space` play/pause, `←` `→` seek, `Ctrl+←` `Ctrl+→`
 previous/next, click the cover or the app name to bring the player to the front. In Timer: `Space`
 or `Enter` start/pause, `↑` `↓` adjust (or add/remove a minute while running), `Delete` stops,
-`Ctrl+→` skips to the next Pomodoro phase.
+`Ctrl+→` skips to the next Pomodoro phase. In Recents: `←` `→` select, `Enter` copies, `Ctrl+Enter`
+opens, `Delete` removes.
 
 ## Install
 
@@ -156,6 +164,7 @@ src-tauri/src/            Rust core
   media.rs                now playing: session watcher, change detection, playback commands
   audio/                  audio bars: loopback capture loop, FFT band levels (spectrum.rs)
   quick_accent/           Quick Accent: keyboard hook logic (machine.rs), accents per language
+  recents/                clipboard history and shelf: list logic (list.rs), clipboard images (image.rs)
   timer/                  timer and Pomodoro: pure logic (machine.rs), deadline watcher, notification
   updates.rs              in-app updates: periodic check, notification, signed install
   appearance.rs           window theme for the light/dark setting
@@ -167,6 +176,7 @@ src/                      React UI (one bundle, two windows)
   widgets/spotlight/      the search panel, result actions and action menu
   widgets/music/          live activity, music panel, progress bar, cover glow color
   widgets/timer/          timer panel, timer live activity and bubble
+  widgets/recents/        Recents cards, drag out, drop zone, screenshot peek
   settings/               settings window
   shared/                 typed IPC layer, browser preview backend
 ```
@@ -205,6 +215,7 @@ The test copy uses the same layout under `com.l8.toolkit.dev`.
 
 - Settings: `%APPDATA%\com.l8.toolkit\settings.json`
 - Launch history: `%APPDATA%\com.l8.toolkit\usage.json`
+- Recents: `%APPDATA%\com.l8.toolkit\recents\` (list and images)
 - Logs: `%LOCALAPPDATA%\com.l8.toolkit\logs`
 
 ## License

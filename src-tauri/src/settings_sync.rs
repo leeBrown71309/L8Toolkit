@@ -16,6 +16,7 @@ use crate::notch;
 use crate::platform;
 use crate::settings::{AppSettings, SettingsStore};
 use crate::status::{self, AppStatus};
+use crate::recents;
 use crate::timer;
 
 pub const SETTINGS_CHANGED_EVENT: &str = "settings:changed";
@@ -61,6 +62,7 @@ pub fn apply(app: &AppHandle, requested: AppSettings) -> Result<SettingsSnapshot
     let mut next = requested;
     next.spotlight.hotkey = next.spotlight.hotkey.trim().to_string();
     next.timer = next.timer.sanitized();
+    next.recents = next.recents.sanitized();
 
     apply_spotlight_shortcut(app, &previous, &mut next);
 
@@ -92,6 +94,9 @@ pub fn apply(app: &AppHandle, requested: AppSettings) -> Result<SettingsSnapshot
         app.state::<AudioVisualizer>().set_wanted(false);
     }
     timer::sync_with_settings(app);
+    if next.recents != previous.recents {
+        recents::sync_with_settings(app, &previous.recents);
+    }
     notch::sync_idle_visibility(app);
 
     let index_changed = next.spotlight.index_files != previous.spotlight.index_files

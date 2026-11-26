@@ -9,6 +9,7 @@ import type {
   NotchOpenedPayload,
   NowPlaying,
   OpenSource,
+  RecentView,
   TimerFinished,
   WidgetTab,
 } from "../../shared/types";
@@ -19,6 +20,9 @@ import { useArtworkGlow } from "../music/artwork-glow";
 import { MusicPanel } from "../music/music-panel";
 import { MusicBubbleContent, NowPlayingLive } from "../music/now-playing-live";
 import { currentPositionMs, useNowPlaying } from "../music/use-now-playing";
+import { RecentsPanel } from "../recents/recents-panel";
+import { ScreenshotLive } from "../recents/screenshot-live";
+import { useRecents } from "../recents/use-recents";
 import { SpotlightPanel } from "../spotlight/spotlight-panel";
 import { TimerBubbleContent, TimerLive } from "../timer/timer-live";
 import { TimerPanel } from "../timer/timer-panel";
@@ -42,8 +46,12 @@ const MAX_PANEL_HEIGHT = 500;
 const INITIAL_PANEL_HEIGHT = 180;
 /** How long the notch shows that a timer period ended. */
 const TIMER_ALERT_MS = 5000;
-const TAB_ORDER: WidgetTab[] = ["search", "music", "timer"];
-const TAB_SHORTCUTS: Record<string, WidgetTab> = { "1": "search", "2": "music", "3": "timer" };
+/** How long a new screenshot is shown in the notch. */
+const SCREENSHOT_PEEK_MS = 4000;
+/** A notch opened by a file drag closes this long after the drag leaves without a drop. */
+const DROP_LEAVE_CLOSE_DELAY_MS = 250;
+const TAB_ORDER: WidgetTab[] = ["search", "music", "timer", "recents"];
+const TAB_SHORTCUTS: Record<string, WidgetTab> = { "1": "search", "2": "music", "3": "timer", "4": "recents" };
 
 /** What can live in the folded notch. With two at once, one takes the bubble. */
 type Activity = "music" | "timer";
@@ -84,6 +92,11 @@ function resolveBackdrop(material: Material | undefined, wallpaper: string | nul
   return null;
 }
 
+/** No position to show: the whole edge lights up (a screenshot flash). */
+function readNoProgress(): number | null {
+  return null;
+}
+
 /** Track identity, to notice when the song (or video) changes. */
 function trackKey(media: NowPlaying | null): string | null {
   return media ? `${media.sourceName}|${media.title}|${media.artist}` : null;
@@ -114,6 +127,8 @@ export function NotchApp() {
   const musicEnabled = music?.enabled ?? false;
   const timerSettings = settings?.settings.timer;
   const timerEnabled = timerSettings?.enabled ?? false;
+  const recentsSettings = settings?.settings.recents;
+  const recentsEnabled = recentsSettings?.enabled ?? false;
   useApplyAppearance(appearance, settings?.systemAccentColor ?? null);
 
   const media = useNowPlaying(musicEnabled);
@@ -121,13 +136,25 @@ export function NotchApp() {
   /** The activity the user turned to last: it gets the notch, the other the bubble. */
   const [primary, setPrimary] = useState<Activity>("music");
   const [timerAlert, setTimerAlert] = useState<TimerFinished | null>(null);
+  const recents = useRecents(recentsEnabled);
+  /** A screenshot just taken, shown in the notch for a few seconds. */
+  const [shot, setShot] = useState<RecentView | null>(null);
+  /** Files are being dragged over the notch. */
+  const [dropActive, setDropActive] = useState(false);
+  /** An item is being dragged out of Recents: its own drag-enter is not a drop. */
+  const ownDragRef = useRef(false);
   const glow = useArtworkGlow(media?.artwork ?? null, Boolean(music?.artworkTint));
   const wallpaper = useWallpaper(appearance?.material === "mica", session.id);
   const backdrop = resolveBackdrop(appearance?.material, wallpaper, snapshot);
   const tabs = useMemo(() => {
-    const enabled: Record<WidgetTab, boolean> = { search: searchEnabled, music: musicEnabled, timer: timerEnabled };
+    const enabled: Record<WidgetTab, boolean> = {
+      search: searchEnabled,
+      music: musicEnabled,
+      timer: timerEnabled,
+      recents: recentsEnabled,
+    };
     return TAB_ORDER.filter((candidate) => enabled[candidate]);
-  }, [searchEnabled, musicEnabled, timerEnabled]);
+  }, [searchEnabled, musicEnabled, timerEnabled, recentsEnabled]);
 
   // Which activity takes the notch, which one the bubble beside it.
   const timerActive = isTimerActive(timer);
@@ -193,7 +220,14 @@ export function NotchApp() {
       // Hovering an activity (the notch or its bubble) means "show me that";
       // the keyboard shortcut means "search".
       const availableTabs = tabsRef.current;
-      const pointed = source === "hover" ? (zone === "bubble" ? bubbleActivityRef.current : mainActivityRef.current) : null;
+      const pointed: WidgetTab | null =
+        source === "drop"
+          ? "recents"
+          : source === "hover"
+            ? zone === "bubble"
+              ? bubbleActivityRef.current
+              : mainActivityRef.current
+            : null;
       const fallback = availableTabs.includes("search") ? "search" : (availableTabs[0] ?? "search");
       setTab(pointed && availableTabs.includes(pointed) ? pointed : fallback);
       setMode("open");
@@ -213,6 +247,58 @@ export function NotchApp() {
 
   useBackendEvent<NotchOpenedPayload>(BACKEND_EVENTS.notchOpened, handleOpened);
   useBackendEvent<AccentBarState>(BACKEND_EVENTS.accentState, setAccent);
+  // A screenshot was taken: the notch peeks with its thumbnail.
+  useBackendEvent<RecentView>(BACKEND_EVENTS.recentsScreenshot, (view) => {
+    setShot(view);
+    setMode((current) => (current === "open" ? current : "peek"));
+    window.clearTimeout(peekTimerRef.current);
+    peekTimerRef.current = window.setTimeout(() => {
+      setShot(null);
+      setMode((current) => (current === "peek" ? "idle" : current));
+    }, SCREENSHOT_PEEK_MS);
+  });
+
+  // Files dragged onto the notch: it opens on Recents and takes them (the shelf).
+  const dropLeaveTimerRef = useRef<number | undefined>(undefined);
+  useEffect(() => {
+    if (!recentsEnabled) return;
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+    backend
+      .onFileDrag((event) => {
+        if (ownDragRef.current) {
+          if (event.type === "drop" || event.type === "leave") ownDragRef.current = false;
+          return;
+        }
+        window.clearTimeout(dropLeaveTimerRef.current);
+        if (event.type === "enter") {
+          setDropActive(true);
+          setTab("recents");
+          if (modeRef.current !== "open") {
+            backend.notchOpenForDrop().catch((error: unknown) => console.error("Cannot open the notch for a drop", error));
+          }
+        } else if (event.type === "drop") {
+          setDropActive(false);
+          backend.recentsAddFiles(event.paths).catch((error: unknown) => console.error("Cannot keep the dropped files", error));
+        } else if (event.type === "leave") {
+          setDropActive(false);
+          if (sessionRef.current.source === "drop" && !engagedRef.current) {
+            dropLeaveTimerRef.current = window.setTimeout(() => close(true), DROP_LEAVE_CLOSE_DELAY_MS);
+          }
+        }
+      })
+      .then((stop) => {
+        if (disposed) stop();
+        else unlisten = stop;
+      })
+      .catch((error: unknown) => console.error("Cannot listen to file drags", error));
+    return () => {
+      disposed = true;
+      unlisten?.();
+      window.clearTimeout(dropLeaveTimerRef.current);
+    };
+  }, [recentsEnabled, close]);
+
   // A period ended: the notch peeks with the news (the timer takes the notch).
   useBackendEvent<TimerFinished>(BACKEND_EVENTS.timerFinished, (finished) => {
     if (!timerSettingsRef.current?.showInNotch) return;
@@ -347,7 +433,8 @@ export function NotchApp() {
   }, [cancelLeaveTimer]);
 
   const handlePanelPointerLeave = useCallback(() => {
-    const isPeek = sessionRef.current.source === "hover" && !engagedRef.current;
+    const source = sessionRef.current.source;
+    const isPeek = (source === "hover" || source === "drop") && !engagedRef.current;
     if (modeRef.current !== "open" || !isPeek) return;
     cancelLeaveTimer();
     leaveTimerRef.current = window.setTimeout(() => close(true), HOVER_LEAVE_CLOSE_DELAY_MS);
@@ -391,7 +478,12 @@ export function NotchApp() {
         readProgress: readTimerProgress,
       }
     : null;
-  const live = mainActivity === "music" ? musicLive : mainActivity === "timer" ? timerLive : null;
+  const activityLive = mainActivity === "music" ? musicLive : mainActivity === "timer" ? timerLive : null;
+  // A new screenshot briefly takes over the notch; the activity comes back after.
+  const shotShown = shot !== null && Boolean(recentsSettings?.screenshotPeek);
+  const live: NotchLiveActivity | null = shotShown
+    ? { content: <ScreenshotLive shot={shot} visible={mode === "peek"} />, playing: true, glow: null, readProgress: readNoProgress }
+    : activityLive;
 
   let bubble: NotchBubble | null = null;
   if (bubbleActivity === "music" && media) {
@@ -462,6 +554,20 @@ export function NotchApp() {
                 isActive={mode === "open" && activeTab === "timer"}
                 onClose={close}
                 onEngaged={markEngaged}
+              />
+            </div>
+          )}
+          {recentsEnabled && (
+            <div className="widget-view" hidden={activeTab !== "recents"}>
+              <RecentsPanel
+                items={recents}
+                isActive={mode === "open" && activeTab === "recents"}
+                dropActive={dropActive}
+                onClose={close}
+                onEngaged={markEngaged}
+                onDragOut={() => {
+                  ownDragRef.current = true;
+                }}
               />
             </div>
           )}

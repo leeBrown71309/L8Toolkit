@@ -1,3 +1,4 @@
+import { createPreviewRecents } from "./preview-recents";
 import { createPreviewTimer } from "./preview-timer";
 import type { Backend, Unlisten } from "./backend";
 import type {
@@ -16,6 +17,7 @@ import type {
  * Tauri (`bun run dev` in a browser) so the design can be iterated on quickly.
  * Trigger events from the console: `window.l8Preview.emit("notch:opened", { source: "hotkey" })`.
  * Accent bar: `window.l8Preview.emit("accent:state", { visible: true, characters: ["é", "è", "ê", "ë"], index: 1 })`.
+ * Screenshot peek: `window.l8Preview.recents.screenshot()`.
  * Timer: `window.l8Preview.timer.apply({ type: "startCountdown", durationMs: 60000 })` (`?timerSpeed=40` runs it faster).
  */
 
@@ -92,6 +94,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     roundsBeforeLongBreak: 4,
     autoContinue: true,
   },
+  recents: { enabled: true, limit: 10, screenshotPeek: true, keepPasswordManagerItems: true },
 };
 
 function previewResult(kind: ResultKind, title: string, subtitle: string, matchIndices: number[] = []): SearchResult {
@@ -240,8 +243,9 @@ export function createPreviewBackend(): Backend {
   };
 
   const timer = createPreviewTimer(() => snapshot.settings.timer, emit);
+  const recents = createPreviewRecents(emit);
 
-  (window as unknown as { l8Preview: unknown }).l8Preview = { emit, setMedia, previewTrack, setRemoteAudio, setUpdateState, timer };
+  (window as unknown as { l8Preview: unknown }).l8Preview = { emit, setMedia, previewTrack, setRemoteAudio, setUpdateState, timer, recents };
 
   return {
     search: async (query) => previewSearch(query),
@@ -295,6 +299,15 @@ export function createPreviewBackend(): Backend {
     timerState: async () => timer.snapshot(),
     timerCommand: async (request) => timer.apply(request),
     notchSetLayout: async () => undefined,
+    notchOpenForDrop: async () => emit("notch:opened", { source: "drop" }),
+    recentsList: async () => recents.list(),
+    recentsCopy: async (id) => recents.copy(id),
+    recentsOpen: async (id) => console.info("[preview] open recent", id),
+    recentsDrag: async (id) => console.info("[preview] drag recent", id),
+    recentsRemove: async (id) => recents.remove(id),
+    recentsClear: async () => recents.clear(),
+    recentsAddFiles: async (paths) => recents.addFiles(paths),
+    onFileDrag: async () => () => undefined,
     getSettings: async () => snapshot,
     updateSettings: async (settings) => {
       snapshot = { ...snapshot, settings };

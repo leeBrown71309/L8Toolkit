@@ -50,7 +50,7 @@ export interface AppearanceSettings {
   accent: AccentColor;
 }
 
-export type OpenSource = "hotkey" | "hover" | "tray";
+export type OpenSource = "hotkey" | "hover" | "tray" | "drop";
 
 export type WebSearchEngine = "google" | "bing" | "duckduckgo" | "brave";
 
@@ -116,6 +116,16 @@ export interface TimerSettings {
   autoContinue: boolean;
 }
 
+export interface RecentsSettings {
+  enabled: boolean;
+  /** How many items are kept. */
+  limit: number;
+  /** The notch briefly shows a new screenshot. */
+  screenshotPeek: boolean;
+  /** Copies from password managers are kept (never shown in clear). */
+  keepPasswordManagerItems: boolean;
+}
+
 export type LanguagePreference = "system" | "en" | "fr";
 
 export interface AppSettings {
@@ -129,6 +139,7 @@ export interface AppSettings {
   music: MusicSettings;
   quickAccent: QuickAccentSettings;
   timer: TimerSettings;
+  recents: RecentsSettings;
 }
 
 export interface AppStatus {
@@ -176,7 +187,39 @@ export type PlaybackRequest =
   | { type: "previous" }
   | { type: "seek"; positionMs: number };
 
-export type WidgetTab = "search" | "music" | "timer";
+export type WidgetTab = "search" | "music" | "timer" | "recents";
+
+export type RecentKind = "text" | "image" | "files";
+/** copy: Ctrl+C anywhere; screenshot: a screen capture; shelf: dropped on the notch. */
+export type RecentOrigin = "copy" | "screenshot" | "shelf";
+
+export interface RecentFile {
+  path: string;
+  name: string;
+  /** False once the file was moved or deleted. */
+  exists: boolean;
+}
+
+/** One Recents item, mirrored from recents/mod.rs. */
+export interface RecentView {
+  id: string;
+  kind: RecentKind;
+  origin: RecentOrigin;
+  createdAtMs: number;
+  /** The beginning of a text; null for sensitive items. */
+  preview: string | null;
+  textLength: number;
+  files: RecentFile[];
+  /** Small PNG data URL for images. */
+  thumbnail: string | null;
+  imageSize: [number, number] | null;
+  /** Copied from a password manager: never shown in clear. */
+  sensitive: boolean;
+  sourceApp: string | null;
+}
+
+/** Files dragged over the notch window (Tauri drag and drop). */
+export type FileDragEvent = { type: "enter"; paths: string[] } | { type: "over" } | { type: "drop"; paths: string[] } | { type: "leave" };
 
 export type TimerMode = "countdown" | "pomodoro";
 export type PomodoroPhase = "focus" | "shortBreak" | "longBreak";

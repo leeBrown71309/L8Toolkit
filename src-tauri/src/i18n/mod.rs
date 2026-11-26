@@ -124,6 +124,11 @@ texts! {
     PomodoroFocusReady,
     PomodoroBreakStarted,
     PomodoroBreakReady,
+
+    RecentsScreenshotName,
+    RecentsImageName,
+    ErrorRecentGone,
+    ErrorRecentFilesMissing,
 }
 
 pub fn tr(language: Language, text: Text) -> &'static str {

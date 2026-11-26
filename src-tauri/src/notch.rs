@@ -53,6 +53,8 @@ pub enum OpenSource {
     Hotkey,
     Hover,
     Tray,
+    /// Files dragged onto the notch.
+    Drop,
 }
 
 /// Which part of the folded notch the pointer rested on.
@@ -160,7 +162,7 @@ pub fn open(app: &AppHandle, source: OpenSource) {
 /// Opens the notch; `zone` tells the web layer which activity was pointed at.
 fn open_at(app: &AppHandle, source: OpenSource, zone: HoverZone) {
     let enabled = app.state::<SettingsStore>().read(|settings| {
-        settings.spotlight.enabled || settings.music.enabled || settings.timer.enabled
+        settings.spotlight.enabled || settings.music.enabled || settings.timer.enabled || settings.recents.enabled
     });
     if !enabled {
         return;
@@ -178,9 +180,9 @@ fn open_at(app: &AppHandle, source: OpenSource, zone: HoverZone) {
         controller.previous_foreground.store(foreground, Ordering::SeqCst);
     }
 
-    // Keyboard and tray opens follow the pointer to its monitor; a hover open
-    // already happens on the monitor showing the notch.
-    if source != OpenSource::Hover {
+    // Keyboard and tray opens follow the pointer to its monitor; hover and
+    // drop opens already happen on the monitor showing the notch.
+    if !matches!(source, OpenSource::Hover | OpenSource::Drop) {
         if let Some(monitor) = cursor_monitor(app) {
             place_on_monitor(&window, &monitor, &controller, is_primary(app, &monitor));
         }
@@ -407,6 +409,7 @@ fn start_pointer_watch(app: AppHandle) {
     let spawned = thread::Builder::new().name("notch-pointer-watch".into()).spawn(move || {
         let mut dwell_ticks = 0u32;
         let mut hovered_zone: Option<HoverZone> = None;
+        let mut drop_target = DropTarget::default();
         let mut tick = 0u32;
         loop {
             thread::sleep(POINTER_POLL_INTERVAL);
@@ -423,12 +426,25 @@ fn start_pointer_watch(app: AppHandle) {
             let unobstructed = !controller.fullscreen_app_active.load(Ordering::SeqCst);
             if !(hover_allowed && idle && unobstructed) {
                 dwell_ticks = 0;
+                drop_target.disarm(&app, idle);
+                continue;
+            }
+
+            let cursor = platform::cursor_position();
+            let button_down = platform::left_button_down();
+            let on_notch = cursor.is_some_and(|(x, y)| is_in_hover_zone(&placement, x, y));
+            let shelf_enabled = app.state::<SettingsStore>().read(|settings| settings.recents.enabled);
+            drop_target.update(&app, shelf_enabled && button_down, on_notch);
+            // A held button is a drag (a file, a window): the drop target
+            // handles it, resting on the notch must not open it.
+            if button_down {
+                dwell_ticks = 0;
                 continue;
             }
 
             let bubble = controller.bubble.load(Ordering::SeqCst);
             // The bubble is checked first: its zone touches the notch's padding.
-            let zone = platform::cursor_position().and_then(|(x, y)| {
+            let zone = cursor.and_then(|(x, y)| {
                 if bubble && is_in_bubble_zone(&placement, x, y) {
                     Some(HoverZone::Bubble)
                 } else {
@@ -448,6 +464,57 @@ fn start_pointer_watch(app: AppHandle) {
     });
     if let Err(error) = spawned {
         log::error!("Cannot start the notch pointer watcher: {error}");
+    }
+}
+
+/// Lets files be dropped on the idle notch (the Recents shelf).
+///
+/// The idle window ignores the mouse, so Windows would never offer it a drop.
+/// When the button went down elsewhere and the pointer then reaches the notch
+/// with the button still held (a drag in progress), the window starts taking
+/// the mouse; if what is dragged is a file, the web layer gets a drag-enter
+/// and opens the notch. A plain click on the notch never arms it, so clicks
+/// keep reaching the window below.
+#[derive(Default)]
+struct DropTarget {
+    /// The button went down outside the notch and is still held.
+    dragging_in: bool,
+    armed: bool,
+    was_down: bool,
+}
+
+impl DropTarget {
+    fn update(&mut self, app: &AppHandle, button_down: bool, on_notch: bool) {
+        if button_down && !self.was_down {
+            self.dragging_in = !on_notch;
+        }
+        self.was_down = button_down;
+        let wanted = button_down && self.dragging_in && on_notch;
+        if wanted && !self.armed {
+            self.armed = true;
+            set_mouse_through(app, false);
+        } else if !wanted && self.armed && !button_down {
+            self.disarm(app, true);
+        }
+        if !button_down {
+            self.dragging_in = false;
+        }
+    }
+
+    /// Back to click-through, unless the notch opened meanwhile (it owns the mouse then).
+    fn disarm(&mut self, app: &AppHandle, idle: bool) {
+        if self.armed {
+            self.armed = false;
+            if idle {
+                set_mouse_through(app, true);
+            }
+        }
+    }
+}
+
+fn set_mouse_through(app: &AppHandle, through: bool) {
+    if let Some(window) = notch_window(app) {
+        log_failure("update the notch mouse handling", window.set_ignore_cursor_events(through));
     }
 }
 

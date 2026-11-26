@@ -67,5 +67,10 @@ pub fn text(text: Text) -> &'static str {
         Text::PomodoroFocusReady => "Start the next {minutes}-minute focus session from the notch.",
         Text::PomodoroBreakStarted => "Take a {minutes}-minute break, it has started.",
         Text::PomodoroBreakReady => "Start your {minutes}-minute break from the notch.",
+
+        Text::RecentsScreenshotName => "Screenshot",
+        Text::RecentsImageName => "Image",
+        Text::ErrorRecentGone => "This item is no longer available",
+        Text::ErrorRecentFilesMissing => "These files were moved or deleted",
     }
 }
