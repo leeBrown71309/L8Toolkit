@@ -396,7 +396,10 @@
   top: 0;
   left: 50%;
   width: var(--notch-open-w);
-  translate: -50% 0;
+  /* Centred with a margin, not `translate`: the production CSS minifier drops
+     `translate` from a rule that also sets `transform` (the panel then sat
+     half a panel to the right in release builds only). */
+  margin-left: calc(var(--notch-open-w) / -2);
   transform-origin: 50% 0;
   opacity: 0;
   filter: blur(6px);

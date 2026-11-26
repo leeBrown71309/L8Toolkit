@@ -14,3 +14,4 @@ latest.json
 
 # Local assistant settings
 .claude/
+.playwright-mcp/

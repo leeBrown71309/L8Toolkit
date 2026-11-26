@@ -3,6 +3,22 @@
 A tray app that hosts small widgets inside a **virtual notch** at the top of the screen.
 The notch idles as a small black shape against the bezel and pours open into a panel.
 
+<p align="center">
+  <img src="docs/screenshots/search.png" alt="The notch opened on Search, with results for &quot;co&quot;" width="760" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/music.png" alt="The Music widget: cover, title, progress bar and controls" width="760" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/live-notch.png" alt="The folded notch while music plays: audio bars and the progress light" width="560" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/settings.png" alt="Settings, Appearance: theme, panel material and accent color" width="620" />
+</p>
+
 Widgets:
 - **Spotlight**: a launcher that searches apps, files, folders, the web, and does quick math.
 - **Music**: whatever plays in Spotify, a browser (YouTube...) or any media app, read from the
@@ -55,7 +71,7 @@ Only one can run at a time (both draw a notch and use the same shortcut): `app:d
 installed release first. When a feature is merged and released:
 
 ```powershell
-bun run dev:remove        # removes every trace of the test copy
+bun run dev:remove        # removes the test copy (keeps its settings for next time)
 bun run release:install   # installs the latest release if it is missing or older
 ```
 

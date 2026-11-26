@@ -1,7 +1,7 @@
 {
   "name": "l8-tools-kits",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,7 +13,8 @@
     "app:build": "tauri build",
     "dev:remove": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/remove-dev-app.ps1",
     "release:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-release.ps1",
-    "release:manifest": "bun scripts/make-update-manifest.ts"
+    "release:manifest": "bun scripts/make-update-manifest.ts",
+    "version:next": "bun scripts/bump-version.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",

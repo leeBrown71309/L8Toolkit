@@ -1,21 +1,22 @@
 <#
 .SYNOPSIS
-  Removes every trace of the test copy ("L8 Toolkit Dev") from this PC.
+  Removes the test copy ("L8 Toolkit Dev") from this PC, keeping its settings.
 
 .DESCRIPTION
-  Run after a merge to main, once the release is published (`bun run dev:remove`),
-  so only the real, installed L8 Toolkit is left:
-    - stops the test copy if it runs
+  Run before a release goes out (`bun run dev:remove`), so only the real,
+  installed L8 Toolkit is left on this PC:
+    - stops the test copy if it runs (app and the Vite server of `tauri dev`)
     - removes its "launch at startup" entry
     - uninstalls it if a test installer was ever installed
-    - deletes its settings, history, logs and WebView data (com.l8.toolkit.dev)
     - deletes the built test executables, so Windows Search only finds the release
+  Its settings and history (com.l8.toolkit.dev) are KEPT, so the next development
+  session does not start from scratch; -DeleteData removes them too.
   The release (com.l8.toolkit) and its settings are never touched.
   `bun run app:dev` rebuilds the test copy whenever development resumes.
 #>
 param(
-    # Keep the test copy's settings (only stop it and remove the executables).
-    [switch] $KeepData
+    # Also delete the test copy's settings, history, logs and WebView data.
+    [switch] $DeleteData
 )
 $ErrorActionPreference = "Stop"
 
@@ -26,8 +27,14 @@ function Write-Step([string] $message) {
 }
 
 # 1. Stop the running test copy (anything started from src-tauri\target).
-$running = Get-Process -ErrorAction SilentlyContinue |
-    Where-Object { $_.Path -and $_.Path.StartsWith($TargetDirectory, [StringComparison]::OrdinalIgnoreCase) }
+$running = @(Get-Process -ErrorAction SilentlyContinue |
+    Where-Object { $_.Path -and $_.Path.StartsWith($TargetDirectory, [StringComparison]::OrdinalIgnoreCase) })
+# The Vite server `tauri dev` started for it.
+$viteListener = Get-NetTCPConnection -LocalPort 1420 -State Listen -ErrorAction SilentlyContinue |
+    Select-Object -First 1
+if ($viteListener) {
+    $running += @(Get-Process -Id $viteListener.OwningProcess -ErrorAction SilentlyContinue)
+}
 foreach ($process in $running) {
     Stop-Process -Id $process.Id -Force
     Write-Step "Stopped the test copy (pid $($process.Id))"
@@ -51,8 +58,8 @@ if ($devInstall -and $devInstall.UninstallString) {
     Write-Step "Uninstalled $DevProductName"
 }
 
-# 4. Its data folders.
-if (-not $KeepData) {
+# 4. Its data folders, only on request.
+if ($DeleteData) {
     foreach ($root in @($env:APPDATA, $env:LOCALAPPDATA)) {
         $folder = Join-Path $root $DevIdentifier
         if (Test-Path $folder) {
