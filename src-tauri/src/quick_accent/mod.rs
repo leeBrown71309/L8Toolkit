@@ -25,6 +25,7 @@ pub use characters::{characters_for, AccentLanguage};
 pub use machine::AccentTrigger;
 use machine::{AccentMachine, Command, Key};
 
+use crate::fullscreen_pause;
 use crate::notch;
 use crate::platform::{self, KeyboardHook};
 use crate::settings::QuickAccentSettings;
@@ -124,8 +125,9 @@ impl QuickAccentService {
 fn hook_handler(app: AppHandle, state: Arc<HookState>, commands: Sender<Command>) -> platform::KeyHandler {
     Box::new(move |event| {
         let mut machine = state.machine.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-        // The open notch has its own keyboard (search field, music keys).
-        if notch::is_open(&app) {
+        // The open notch has its own keyboard (search field, music keys), and
+        // a fullscreen game gets every key untouched.
+        if notch::is_open(&app) || fullscreen_pause::is_active(&app) {
             if let Some(command) = machine.reset() {
                 let _ = commands.send(command);
             }

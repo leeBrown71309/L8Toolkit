@@ -17,6 +17,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, LogicalSize, Manager, Monitor, PhysicalPosition, WebviewWindow};
 
 use crate::backdrop;
+use crate::fullscreen_pause;
 use crate::media::MediaService;
 use crate::platform;
 use crate::settings::{Material, SettingsStore};
@@ -72,6 +73,8 @@ pub struct Placement {
 pub struct NotchController {
     is_open: AtomicBool,
     fullscreen_app_active: AtomicBool,
+    /// The focused window is fullscreen on any monitor, not only the notch's.
+    fullscreen_app_focused: AtomicBool,
     previous_foreground: AtomicIsize,
     own_window: AtomicIsize,
     /// A bar shown over the idle notch (Quick Accent) keeps the window visible.
@@ -259,6 +262,11 @@ pub fn is_covered_by_fullscreen_app(app: &AppHandle) -> bool {
     app.state::<NotchController>().fullscreen_app_active.load(Ordering::SeqCst)
 }
 
+/// The focused window fills a monitor (any of them): a game, a video.
+pub fn is_fullscreen_app_focused(app: &AppHandle) -> bool {
+    app.state::<NotchController>().fullscreen_app_focused.load(Ordering::SeqCst)
+}
+
 /// The idle notch shows when the user keeps it, or while media plays and
 /// the music live activity is on.
 fn idle_notch_wanted(app: &AppHandle) -> bool {
@@ -370,16 +378,22 @@ fn start_pointer_watch(app: AppHandle) {
 }
 
 /// Steps the idle notch aside while a fullscreen app (game, video) covers
-/// the monitor it lives on.
+/// the monitor it lives on, and pauses the shortcuts while one has the focus
+/// on any monitor (a game on a second screen still takes Alt+Space).
 fn refresh_fullscreen_state(app: &AppHandle, controller: &NotchController, placement: &Placement) {
     let own_window = controller.own_window.load(Ordering::SeqCst);
     let notch_center = (placement.x + placement.width / 2, placement.y + 1);
-    let covered = platform::fullscreen_foreground_rect(own_window).is_some_and(|(left, top, right, bottom)| {
+    let fullscreen_rect = platform::fullscreen_foreground_rect(own_window);
+    let covered = fullscreen_rect.is_some_and(|(left, top, right, bottom)| {
         notch_center.0 >= left && notch_center.0 < right && notch_center.1 >= top && notch_center.1 < bottom
     });
     let previous = controller.fullscreen_app_active.swap(covered, Ordering::SeqCst);
     if previous != covered {
         sync_idle_visibility(app);
+    }
+    let focused = fullscreen_rect.is_some();
+    if controller.fullscreen_app_focused.swap(focused, Ordering::SeqCst) != focused {
+        fullscreen_pause::sync(app);
     }
 }
 

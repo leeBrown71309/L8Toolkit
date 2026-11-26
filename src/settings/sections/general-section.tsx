@@ -53,6 +53,22 @@ export function GeneralSection({ snapshot, controller }: GeneralSectionProps) {
         />
       </SettingsGroup>
 
+      <SettingsGroup title={t("general.fullscreen")}>
+        <SettingRow
+          label={t("general.pauseInFullscreen")}
+          description={t("general.pauseInFullscreen.description")}
+          control={
+            <Toggle
+              label={t("general.pauseInFullscreen")}
+              checked={settings.pauseInFullscreen}
+              onChange={(pauseInFullscreen) =>
+                controller.updateSettings((current) => ({ ...current, pauseInFullscreen }))
+              }
+            />
+          }
+        />
+      </SettingsGroup>
+
       <SettingsGroup title={t("general.application")}>
         <SettingRow label={t("general.version")} description={`L8 Toolkit ${status.version}`} />
         <SettingRow

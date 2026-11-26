@@ -67,6 +67,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   schemaVersion: 2,
   language: "system",
   launchAtStartup: false,
+  pauseInFullscreen: true,
   appearance: { theme: "dark", material: "solid", accent: "ember" },
   spotlight: {
     enabled: true,

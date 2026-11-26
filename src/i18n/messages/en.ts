@@ -186,6 +186,10 @@ export const en = {
   "general.startup": "Startup",
   "general.launchAtStartup": "Launch at startup",
   "general.launchAtStartup.description": "Start L8 Toolkit when you sign in to Windows.",
+  "general.fullscreen": "Games and fullscreen",
+  "general.pauseInFullscreen": "Pause in fullscreen apps",
+  "general.pauseInFullscreen.description":
+    "While a game or a video fills the screen, the search shortcut and Quick Accent let every key through to it.",
   "general.application": "Application",
   "general.version": "Version",
   "general.quit": "Quit",

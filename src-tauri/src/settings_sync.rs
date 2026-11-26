@@ -7,6 +7,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::audio::{self, AudioVisualizer};
 use crate::quick_accent::QuickAccentService;
 use crate::appearance;
+use crate::fullscreen_pause;
 use crate::hotkey;
 use crate::i18n::Language;
 use crate::tray;
@@ -78,6 +79,9 @@ pub fn apply(app: &AppHandle, requested: AppSettings) -> Result<SettingsSnapshot
     }
     if !next.spotlight.enabled {
         notch::collapse(app, true);
+    }
+    if next.pause_in_fullscreen != previous.pause_in_fullscreen {
+        fullscreen_pause::sync(app);
     }
     if next.quick_accent != previous.quick_accent {
         app.state::<QuickAccentService>().configure(app, &next.quick_accent);

@@ -8,6 +8,7 @@ mod audio;
 mod autostart;
 mod backdrop;
 mod commands;
+mod fullscreen_pause;
 mod hotkey;
 mod i18n;
 mod icons;
@@ -32,6 +33,7 @@ use tauri::{AppHandle, Manager, RunEvent};
 
 use crate::audio::AudioVisualizer;
 use crate::backdrop::WallpaperCache;
+use crate::fullscreen_pause::FullscreenPause;
 use crate::hotkey::HotkeyState;
 use crate::icons::IconService;
 use crate::media::MediaService;
@@ -122,6 +124,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     app.manage(IconService::start());
     app.manage(NotchController::default());
     app.manage(HotkeyState::default());
+    app.manage(FullscreenPause::default());
     app.manage(WallpaperCache::new(app.path().app_cache_dir()?));
     app.manage(MediaService::default());
     app.manage(AudioVisualizer::default());

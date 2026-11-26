@@ -1,5 +1,6 @@
 //! Global keyboard shortcuts.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use tauri::plugin::TauriPlugin;
@@ -14,6 +15,8 @@ use crate::settings::SettingsStore;
 pub struct HotkeyState {
     spotlight: Mutex<Option<Shortcut>>,
     last_error: Mutex<Option<String>>,
+    /// Released to a fullscreen app: still known, not held by Windows.
+    suspended: AtomicBool,
 }
 
 impl HotkeyState {
@@ -23,6 +26,10 @@ impl HotkeyState {
 
     fn set_error(&self, error: Option<String>) {
         *self.last_error.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = error;
+    }
+
+    fn current(&self) -> Option<Shortcut> {
+        *self.spotlight.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     fn is_spotlight(&self, shortcut: &Shortcut) -> bool {
@@ -67,6 +74,13 @@ pub fn register_spotlight(app: &AppHandle, accelerator: &str) -> Result<(), Stri
             return Err(message);
         }
     };
+    if state.suspended.load(Ordering::SeqCst) {
+        // Windows gets it when the fullscreen app loses the focus.
+        *state.spotlight.lock().unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(next);
+        state.set_error(None);
+        log::info!("Spotlight shortcut set to {accelerator} (paused while a fullscreen app has the focus)");
+        return Ok(());
+    }
     let manager = app.global_shortcut();
     let previous = state.spotlight.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).take();
     if let Some(previous) = previous {
@@ -99,12 +113,44 @@ pub fn register_spotlight(app: &AppHandle, accelerator: &str) -> Result<(), Stri
 pub fn unregister_spotlight(app: &AppHandle) {
     let state = app.state::<HotkeyState>();
     let previous = state.spotlight.lock().unwrap_or_else(|poisoned| poisoned.into_inner()).take();
-    if let Some(previous) = previous {
+    let held_by_windows = !state.suspended.load(Ordering::SeqCst);
+    if let Some(previous) = previous.filter(|_| held_by_windows) {
         if let Err(error) = app.global_shortcut().unregister(previous) {
             log::warn!("Cannot release the Spotlight shortcut: {error}");
         }
     }
     state.set_error(None);
+}
+
+/// Hands the shortcut to the focused fullscreen app (`true`), so the game
+/// receives the keys, or takes it back (`false`). Settings keep showing it.
+///
+/// Never called with the `spotlight` lock held: registering runs on the main
+/// thread, whose shortcut handler takes that lock.
+pub fn set_suspended(app: &AppHandle, suspended: bool) {
+    let state = app.state::<HotkeyState>();
+    if state.suspended.swap(suspended, Ordering::SeqCst) == suspended {
+        return;
+    }
+    let Some(shortcut) = state.current() else { return };
+    let manager = app.global_shortcut();
+    if suspended {
+        if let Err(error) = manager.unregister(shortcut) {
+            log::warn!("Cannot release the Spotlight shortcut to the fullscreen app: {error}");
+        }
+        return;
+    }
+    match manager.register(shortcut) {
+        Ok(()) => state.set_error(None),
+        Err(error) => {
+            // Another app took the combination while it was released.
+            log::warn!("Cannot take the Spotlight shortcut back: {error}");
+            let store = app.state::<SettingsStore>();
+            let accelerator = store.read(|settings| settings.spotlight.hotkey.clone());
+            let message = tr_with(store.language(), Text::ErrorShortcutInUse, &[("shortcut", &accelerator)]);
+            state.set_error(Some(message));
+        }
+    }
 }
 
 #[cfg(test)]

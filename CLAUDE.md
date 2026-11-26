@@ -86,6 +86,17 @@ The patch number counts from 0 to 5, then the minor number goes up and the patch
 `src-tauri/Cargo.toml` (then `cargo check` so `Cargo.lock` follows); `--to 1.0.0` for a chosen one.
 Every release bumps the version; a merge without a bump publishes nothing.
 
+## Checking the installed app from Claude Code
+
+Claude Code runs inside the packaged (MSIX) Claude desktop app: Windows redirects its writes to
+`%LOCALAPPDATA%` / `%APPDATA%` (and `HKCU`) into
+`%LOCALAPPDATA%\Packages\Claude_*\LocalCache\`, and shows that private copy first when reading.
+So from Claude's shell, an install made there (`bun run release:install`), the installed
+version, its files, its logs and its registry entry are a private copy, not what the maintainer
+runs. Ask the maintainer to read the version in Settings › Updates, and start the real installed app
+through Explorer (`explorer.exe "<path>"`), never directly. Never conclude an update failed from
+those reads alone.
+
 ## Releases
 
 Work on `dev`, open a pull request into `main` (protected: one approving review from the

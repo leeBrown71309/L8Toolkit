@@ -32,6 +32,10 @@ Widgets:
   letter to type the chosen one, in any app. 29 languages plus currencies and symbols, chosen in
   Settings › Quick Accent (`src-tauri/src/quick_accent/`).
 
+While a fullscreen app (a game, a video) has the focus, the search shortcut is released to it and
+Quick Accent lets every key through, so playing never opens the notch by accident (Settings ›
+General › Games and fullscreen, `src-tauri/src/fullscreen_pause.rs`).
+
 Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` / `Ctrl+2`.
 The interface is available in English and French (Settings > General > Language; "System" follows
 Windows). Strings live in `src/i18n/messages/` (web) and `src-tauri/src/i18n/` (Rust); both
@@ -128,6 +132,7 @@ src-tauri/src/            Rust core
   lib.rs                  app setup, plugins, command registration
   notch.rs                notch window: placement, open/collapse, hover + fullscreen watcher
   hotkey.rs               global shortcut registration
+  fullscreen_pause.rs     releases the shortcut and Quick Accent to fullscreen apps (games)
   search/                 pure search logic (no Tauri types, unit tested)
     service.rs            ranking across apps, files, commands; top hit selection
     matching.rs           nucleo fuzzy matching + launcher bonuses (prefix, acronym)
