@@ -29,6 +29,7 @@ import { TimerPanel } from "../timer/timer-panel";
 import { useTimer } from "../timer/timer-state";
 import { elapsedRatio, isTimerActive, timerColor } from "../timer/timer-time";
 import { NotchShape, type NotchBackdrop, type NotchBubble, type NotchLiveActivity, type NotchMode } from "./notch-shape";
+import { TAB_ORDER, tabForKeyCode } from "./tab-shortcuts";
 import { WidgetHeader } from "./widget-header";
 
 /** Focus can flicker while Windows hands it over right after opening. */
@@ -50,8 +51,6 @@ const TIMER_ALERT_MS = 5000;
 const SCREENSHOT_PEEK_MS = 4000;
 /** A notch opened by a file drag closes this long after the drag leaves without a drop. */
 const DROP_LEAVE_CLOSE_DELAY_MS = 250;
-const TAB_ORDER: WidgetTab[] = ["search", "music", "timer", "recents"];
-const TAB_SHORTCUTS: Record<string, WidgetTab> = { "1": "search", "2": "music", "3": "timer", "4": "recents" };
 
 /** What can live in the folded notch. With two at once, one takes the bubble. */
 type Activity = "music" | "timer";
@@ -336,14 +335,16 @@ export function NotchApp() {
   }, [close]);
 
   // Widget switching from anywhere in the panel: Alt+Left / Alt+Right cycle
-  // through the tools, Ctrl+1 / Ctrl+2 jump to one. Captured before the
+  // through the tools, Alt+1 to Alt+4 jump to one. Captured before the
   // widgets so neither the search field nor the music keys swallow it.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (modeRef.current !== "open") return;
       const available = tabsRef.current;
-      const cycle = event.altKey && !event.ctrlKey && (event.key === "ArrowLeft" || event.key === "ArrowRight");
-      const direct = event.ctrlKey && !event.altKey ? TAB_SHORTCUTS[event.key] : undefined;
+      // Ctrl+Alt is AltGr on European keyboards: it types characters.
+      const altOnly = event.altKey && !event.ctrlKey && !event.metaKey;
+      const cycle = altOnly && (event.key === "ArrowLeft" || event.key === "ArrowRight");
+      const direct = altOnly && !event.shiftKey ? tabForKeyCode(event.code) : undefined;
       let next: WidgetTab | undefined;
       if (cycle && available.length > 1) {
         const index = available.indexOf(tabRef.current);

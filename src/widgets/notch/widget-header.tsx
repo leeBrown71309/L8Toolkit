@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n/i18n-context";
 import type { MessageKey } from "../../i18n/messages/en";
 import type { WidgetTab } from "../../shared/types";
 import { Equalizer } from "../music/equalizer";
+import { tabNumber } from "./tab-shortcuts";
 
 import "./widget-header.css";
 
@@ -82,7 +83,7 @@ export function WidgetHeader({ tabs, active, musicPlaying, timerRunning, onSelec
               data-active={isActive}
               data-running={tab === "timer" && timerRunning}
               aria-current={isActive ? "page" : undefined}
-              title={t("widget.switchHint", { widget: label })}
+              title={t("widget.switchHint", { widget: label, number: String(tabNumber(tab)) })}
               onClick={() => onSelect(tab)}
             >
               {showEqualizer ? <Equalizer playing className="widget-tab__equalizer" /> : <Glyph size={13} weight="bold" />}

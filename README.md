@@ -51,7 +51,7 @@ While a fullscreen app (a game, a video) has the focus, the search shortcut is r
 Quick Accent lets every key through, so playing never opens the notch by accident (Settings ›
 General › Games and fullscreen, `src-tauri/src/fullscreen_pause.rs`).
 
-Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` to `Ctrl+4`.
+Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Alt+1` to `Alt+4` (Search, Music, Timer, Recents).
 The interface is available in English and French (Settings > General > Language; "System" follows
 Windows). Strings live in `src/i18n/messages/` (web) and `src-tauri/src/i18n/` (Rust); both
 catalogs are type-checked so a missing translation does not compile. Hovering a notch that is playing opens Music;

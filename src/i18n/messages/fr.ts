@@ -68,7 +68,7 @@ export const fr: Record<MessageKey, string> = {
   "widget.timer": "Minuteur",
   "widget.recents": "Récents",
   "widget.tabs": "Widgets",
-  "widget.switchHint": "{widget} (Alt+← / Alt+→ pour changer)",
+  "widget.switchHint": "{widget} (Alt+{number}, ou Alt+← / Alt+→)",
   "widget.openSettings": "Paramètres",
 
   // Musique
@@ -217,7 +217,7 @@ export const fr: Record<MessageKey, string> = {
     "Ce qui joue dans Spotify, un navigateur ou toute app multimédia s'affiche dans l'encoche, avec ses commandes.",
   "musicSettings.widget": "Widget",
   "musicSettings.enable": "Activer Musique",
-  "musicSettings.enable.description": "Ajoute l'onglet Musique à côté de Recherche.",
+  "musicSettings.enable.description": "Ajoute l'onglet Musique (Alt+2 dans l'encoche).",
   "musicSettings.inNotch": "Dans l'encoche",
   "musicSettings.live": "Activité en direct",
   "musicSettings.live.description":
@@ -258,7 +258,7 @@ export const fr: Record<MessageKey, string> = {
     "Un minuteur ou un Pomodoro qui continue de tourner encoche fermée, et s'y affiche.",
   "timerSettings.widget": "Widget",
   "timerSettings.enable": "Activer le Minuteur",
-  "timerSettings.enable.description": "Ajoute l'onglet Minuteur (Ctrl+3 dans l'encoche).",
+  "timerSettings.enable.description": "Ajoute l'onglet Minuteur (Alt+3 dans l'encoche).",
   "timerSettings.inNotch": "Dans l'encoche",
   "timerSettings.live": "Afficher le minuteur en cours",
   "timerSettings.live.description":
@@ -282,7 +282,7 @@ export const fr: Record<MessageKey, string> = {
     "Les derniers textes, images, captures et fichiers copiés, et ce que vous déposez sur l'encoche. Recopiez-les ou glissez-les vers n'importe quelle app.",
   "recentsSettings.widget": "Widget",
   "recentsSettings.enable": "Activer Récents",
-  "recentsSettings.enable.description": "Ajoute l'onglet Récents (Ctrl+4 dans l'encoche) et permet de déposer des fichiers sur l'encoche.",
+  "recentsSettings.enable.description": "Ajoute l'onglet Récents (Alt+4 dans l'encoche) et permet de déposer des fichiers sur l'encoche.",
   "recentsSettings.limit": "Éléments conservés",
   "recentsSettings.limit.description": "Les plus anciens partent à mesure que de nouveaux arrivent. Ils restent après un redémarrage.",
   "recentsSettings.items": "éléments",

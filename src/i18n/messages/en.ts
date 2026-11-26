@@ -70,7 +70,7 @@ export const en = {
   "widget.timer": "Timer",
   "widget.recents": "Recents",
   "widget.tabs": "Widgets",
-  "widget.switchHint": "{widget} (Alt+← / Alt+→ to switch)",
+  "widget.switchHint": "{widget} (Alt+{number}, or Alt+← / Alt+→)",
   "widget.openSettings": "Settings",
 
   // Music
@@ -214,7 +214,7 @@ export const en = {
   "musicSettings.description": "Whatever plays in Spotify, a browser or any media app shows up in the notch, with its controls.",
   "musicSettings.widget": "Widget",
   "musicSettings.enable": "Enable Music",
-  "musicSettings.enable.description": "Adds the Music tab next to Search.",
+  "musicSettings.enable.description": "Adds the Music tab (Alt+2 in the notch).",
   "musicSettings.inNotch": "In the notch",
   "musicSettings.live": "Live activity",
   "musicSettings.live.description": "While media plays, the light along the folded notch traces the progress of the track.",
@@ -254,7 +254,7 @@ export const en = {
     "A countdown or a Pomodoro that keeps running with the notch closed, and shows in it.",
   "timerSettings.widget": "Widget",
   "timerSettings.enable": "Enable Timer",
-  "timerSettings.enable.description": "Adds the Timer tab (Ctrl+3 in the notch).",
+  "timerSettings.enable.description": "Adds the Timer tab (Alt+3 in the notch).",
   "timerSettings.inNotch": "In the notch",
   "timerSettings.live": "Show the running timer",
   "timerSettings.live.description":
@@ -278,7 +278,7 @@ export const en = {
     "The last texts, images, screenshots and files you copied, and what you drop on the notch. Copy them again or drag them into any app.",
   "recentsSettings.widget": "Widget",
   "recentsSettings.enable": "Enable Recents",
-  "recentsSettings.enable.description": "Adds the Recents tab (Ctrl+4 in the notch) and lets you drop files on the notch.",
+  "recentsSettings.enable.description": "Adds the Recents tab (Alt+4 in the notch) and lets you drop files on the notch.",
   "recentsSettings.limit": "Items kept",
   "recentsSettings.limit.description": "The oldest ones leave as new ones arrive. They stay after a restart.",
   "recentsSettings.items": "items",
