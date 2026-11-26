@@ -1,5 +1,5 @@
 /*
- * Placeholder sleeve: the accent (or the media glow) lit from the top left,
+ * Placeholder sleeve: the media color (or a neutral one) lit from the top left,
  * fading into the panel ink, with the note glyph pressed into it. It fills
  * whatever frame holds it (panel cover or the notch peek).
  */
@@ -11,9 +11,9 @@
   height: 100%;
   color: rgb(255 255 255 / 0.82);
   background:
-    radial-gradient(circle at 28% 22%, color-mix(in srgb, var(--media-glow, var(--accent)) 55%, transparent), transparent 62%),
-    radial-gradient(circle at 82% 90%, color-mix(in srgb, var(--media-glow, var(--accent)) 22%, transparent), transparent 55%),
-    linear-gradient(150deg, color-mix(in srgb, var(--media-glow, var(--accent)) 30%, #1c1c20), #121215);
+    radial-gradient(circle at 28% 22%, color-mix(in srgb, var(--media-glow, var(--media-neutral)) 55%, transparent), transparent 62%),
+    radial-gradient(circle at 82% 90%, color-mix(in srgb, var(--media-glow, var(--media-neutral)) 22%, transparent), transparent 55%),
+    linear-gradient(150deg, color-mix(in srgb, var(--media-glow, var(--media-neutral)) 30%, #1c1c20), #121215);
   animation: cover-placeholder-in 320ms var(--ease-out);
 }
 

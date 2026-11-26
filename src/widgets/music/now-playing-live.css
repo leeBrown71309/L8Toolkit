@@ -157,7 +157,7 @@
   width: 3px;
   height: 100%;
   border-radius: 2px;
-  background: var(--media-glow, var(--accent));
+  background: var(--media-glow, var(--media-on-black));
   transform: scaleY(0.3);
   transform-origin: bottom;
   animation: equalizer-bounce 900ms ease-in-out infinite alternate;
