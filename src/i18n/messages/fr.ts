@@ -190,6 +190,10 @@ export const fr: Record<MessageKey, string> = {
   "general.startup": "Démarrage",
   "general.launchAtStartup": "Lancer au démarrage",
   "general.launchAtStartup.description": "Démarre L8 Toolkit à l'ouverture de votre session Windows.",
+  "general.fullscreen": "Jeux et plein écran",
+  "general.pauseInFullscreen": "Pause dans les applis en plein écran",
+  "general.pauseInFullscreen.description":
+    "Quand un jeu ou une vidéo occupe tout l'écran, le raccourci de recherche et les accents rapides lui laissent passer toutes les touches.",
   "general.application": "Application",
   "general.version": "Version",
   "general.quit": "Quitter",

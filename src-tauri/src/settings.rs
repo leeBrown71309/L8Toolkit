@@ -133,6 +133,9 @@ pub struct AppSettings {
     pub schema_version: u32,
     pub language: LanguagePreference,
     pub launch_at_startup: bool,
+    /// While a fullscreen app (game, video) has the focus, the search
+    /// shortcut and Quick Accent let every key through to it.
+    pub pause_in_fullscreen: bool,
     pub appearance: AppearanceSettings,
     pub spotlight: SpotlightSettings,
     pub music: MusicSettings,
@@ -162,6 +165,7 @@ impl Default for AppSettings {
             schema_version: SETTINGS_SCHEMA_VERSION,
             language: LanguagePreference::System,
             launch_at_startup: false,
+            pause_in_fullscreen: true,
             appearance: AppearanceSettings::default(),
             spotlight: SpotlightSettings::default(),
             music: MusicSettings::default(),
@@ -235,6 +239,7 @@ mod tests {
         assert!(parsed.spotlight.enabled);
         assert!(parsed.spotlight.show_idle_notch);
         assert!(parsed.music.enabled);
+        assert!(parsed.pause_in_fullscreen, "files written before the setting pause in fullscreen");
     }
 
     #[test]

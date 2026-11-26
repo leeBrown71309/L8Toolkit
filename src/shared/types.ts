@@ -108,6 +108,8 @@ export interface AppSettings {
   schemaVersion: number;
   language: LanguagePreference;
   launchAtStartup: boolean;
+  /** While a fullscreen app has the focus, the search shortcut and Quick Accent let every key through. */
+  pauseInFullscreen: boolean;
   appearance: AppearanceSettings;
   spotlight: SpotlightSettings;
   music: MusicSettings;
