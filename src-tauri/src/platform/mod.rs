@@ -59,6 +59,38 @@ pub enum MediaCommand {
     Seek { position_ms: u64 },
 }
 
+/// Keys reported by the system keyboard hook (only those features react to).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HookKey {
+    /// A letter key, as a lowercase ASCII letter (whatever the layout prints on it).
+    Letter(char),
+    Space,
+    Left,
+    Right,
+    Escape,
+    Shift,
+    Control,
+    /// Alt, and AltGr (which Windows reports as Ctrl+Alt).
+    Alt,
+    Windows,
+    Other,
+}
+
+/// Modifier keys physically held, as Windows itself knows them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct PressedModifiers {
+    pub shift: bool,
+    pub control: bool,
+    pub alt: bool,
+    pub windows: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HookEvent {
+    pub key: HookKey,
+    pub down: bool,
+}
+
 /// Windows stores colors as 0xAABBGGRR; the web layer wants "#rrggbb".
 pub fn abgr_to_hex(abgr: u32) -> String {
     let red = abgr & 0xff;

@@ -179,7 +179,7 @@ export const fr: Record<MessageKey, string> = {
   "musicSettings.peek.description": "L'encoche s'agrandit brièvement avec la pochette et le titre à chaque changement de morceau.",
   "musicSettings.tint": "Couleurs de la pochette",
   "musicSettings.tint.description":
-    "La lumière et le halo du panneau prennent les couleurs de la pochette. Désactivé, votre couleur d'accentuation est utilisée.",
+    "La vague de progression, la lumière et le halo du panneau prennent les couleurs de la pochette. Désactivé, ils restent neutres : votre couleur d'accentuation est réservée à la Recherche.",
 
   "general.title": "Général",
   "general.description": "L8 Toolkit vit dans la zone de notification et héberge vos widgets d'encoche.",
@@ -195,6 +195,34 @@ export const fr: Record<MessageKey, string> = {
   "general.quit": "Quitter",
   "general.quit.description": "Arrête tous les widgets et libère le raccourci.",
   "general.quit.button": "Quitter L8 Toolkit",
+
+  // Accents rapides
+  "accent.barLabel": "Caractères accentués",
+  "nav.quickAccent": "Accents rapides",
+  "quickAccent.title": "Accents rapides",
+  "quickAccent.description":
+    "Tapez des lettres accentuées sans connaître les combinaisons de touches : maintenez une lettre, choisissez son accent dans l'encoche, relâchez.",
+  "quickAccent.activation": "Activation",
+  "quickAccent.enable": "Activer les accents rapides",
+  "quickAccent.enable.description": "Fonctionne dans toutes les apps. La barre prend votre couleur d'accentuation.",
+  "quickAccent.trigger": "Touches",
+  "quickAccent.trigger.description": "Les touches qui ouvrent la barre pendant qu'une lettre est maintenue, puis la parcourent.",
+  "quickAccent.trigger.spaceAndArrows": "Espace et flèches",
+  "quickAccent.trigger.space": "Espace",
+  "quickAccent.trigger.arrows": "Flèches",
+  "quickAccent.howTo": "Comment ça marche",
+  "quickAccent.howTo.hold": "Maintenez une lettre",
+  "quickAccent.howTo.choose": "Ouvrez la barre et parcourez les accents (Maj+Espace recule, Échap annule)",
+  "quickAccent.howTo.release": "Relâchez la lettre : l'accent choisi la remplace",
+  "quickAccent.try": "Essayez ici : maintenez e, puis appuyez sur Espace",
+  "quickAccent.languages": "Langues",
+  "quickAccent.languages.label": "Accents proposés",
+  "quickAccent.languages.description":
+    "Les accents des langues et ensembles sélectionnés, dans l'ordre où vous les sélectionnez. Avec tous, les longues rangées défilent pendant que vous avancez.",
+  "quickAccent.languages.all": "Toutes les langues",
+  "quickAccent.preview": "Caractères par lettre",
+  "quickAccent.set.currency": "Monnaies (€ £ ¥…)",
+  "quickAccent.set.symbols": "Symboles (© ® ™ § °…)",
 
   // Mises à jour
   "nav.updates": "Mises à jour",

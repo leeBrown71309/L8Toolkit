@@ -74,6 +74,8 @@ pub struct NotchController {
     fullscreen_app_active: AtomicBool,
     previous_foreground: AtomicIsize,
     own_window: AtomicIsize,
+    /// A bar shown over the idle notch (Quick Accent) keeps the window visible.
+    overlay_active: AtomicBool,
     collapse_generation: AtomicU64,
     placement: Mutex<Placement>,
 }
@@ -227,9 +229,29 @@ pub fn sync_idle_visibility(app: &AppHandle) {
         return;
     }
     let Some(window) = notch_window(app) else { return };
+    if controller.overlay_active.load(Ordering::SeqCst) {
+        return;
+    }
     let visible = idle_notch_wanted(app) && !controller.fullscreen_app_active.load(Ordering::SeqCst);
     let outcome = if visible { window.show() } else { window.hide() };
     log_failure("update notch visibility", outcome);
+}
+
+pub fn is_open(app: &AppHandle) -> bool {
+    app.state::<NotchController>().is_open.load(Ordering::SeqCst)
+}
+
+/// Shows the notch window for a bar drawn over the idle notch (Quick Accent),
+/// without taking the focus from the app being typed in; `false` returns to
+/// the normal idle visibility.
+pub fn set_overlay(app: &AppHandle, active: bool) {
+    let controller = app.state::<NotchController>();
+    controller.overlay_active.store(active, Ordering::SeqCst);
+    if active {
+        platform::show_without_activation(controller.own_window.load(Ordering::SeqCst));
+    } else {
+        sync_idle_visibility(app);
+    }
 }
 
 /// A fullscreen app (game, video) covers the notch's monitor.

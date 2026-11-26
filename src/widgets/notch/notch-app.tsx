@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useI18n } from "../../i18n/i18n-context";
 import { useApplyAppearance, useSettingsSnapshot } from "../../shared/appearance";
 import { backend, BACKEND_EVENTS } from "../../shared/backend";
-import type { Material, NotchOpenedPayload, NowPlaying, OpenSource, WidgetTab } from "../../shared/types";
+import type {
+  AccentBarState,
+  Material,
+  NotchOpenedPayload,
+  NowPlaying,
+  OpenSource,
+  WidgetTab,
+} from "../../shared/types";
 import { useBackendEvent } from "../../shared/use-backend-event";
 import { useElementHeight } from "../../shared/use-element-height";
+import { AccentBar, accentBarWidth } from "../accent/accent-bar";
 import { useArtworkGlow } from "../music/artwork-glow";
 import { MusicPanel } from "../music/music-panel";
 import { NowPlayingLive } from "../music/now-playing-live";
@@ -81,6 +90,11 @@ export function NotchApp() {
   const [tabDirection, setTabDirection] = useState<"forward" | "backward">("forward");
   const [panelHeight, setPanelHeight] = useState(INITIAL_PANEL_HEIGHT);
   const [snapshot, setSnapshot] = useState<string | null>(null);
+  const [accent, setAccent] = useState<AccentBarState | null>(null);
+  /** Characters of the last open bar: the width to keep while it closes. */
+  const accentWidthRef = useRef(1);
+  if (accent?.visible && accent.characters.length > 0) accentWidthRef.current = accent.characters.length;
+  const { t } = useI18n();
   const panelRef = useRef<HTMLDivElement>(null);
 
   const settings = useSettingsSnapshot();
@@ -160,6 +174,7 @@ export function NotchApp() {
   );
 
   useBackendEvent<NotchOpenedPayload>(BACKEND_EVENTS.notchOpened, handleOpened);
+  useBackendEvent<AccentBarState>(BACKEND_EVENTS.accentState, setAccent);
   useBackendEvent<null>(BACKEND_EVENTS.notchClosed, () => {
     cancelLeaveTimer();
     setMode("idle");
@@ -278,19 +293,38 @@ export function NotchApp() {
   const live: NotchLiveActivity | null =
     media && music?.showInNotch
       ? {
-          content: <NowPlayingLive media={media} mode={mode} showAudioBars={Boolean(music.showAudioBars)} />,
+          content: (
+            <NowPlayingLive
+              media={media}
+              mode={mode === "open" || mode === "accent" || accent?.visible ? "open" : mode}
+              showAudioBars={Boolean(music.showAudioBars)}
+            />
+          ),
           playing: media.playing,
           glow,
           readProgress,
         }
       : null;
 
+  // The open panel always wins; otherwise an accent bar takes over the idle
+  // notch (or a peek) until it closes.
+  const accentVisible = Boolean(accent?.visible) && mode !== "open";
+  const shownMode: NotchMode = accentVisible ? "accent" : mode;
+  // Once used, the bar stays mounted so it can fade out with the notch.
+  const overlay = accent
+    ? {
+        content: <AccentBar state={mode === "open" ? null : accent} label={t("accent.barLabel")} />,
+        width: accentBarWidth(Math.max(1, accentWidthRef.current)),
+      }
+    : null;
+
   return (
     <NotchShape
-      mode={mode}
+      mode={shownMode}
       openHeight={Math.min(panelHeight, MAX_PANEL_HEIGHT)}
       backdrop={backdrop}
       live={live}
+      overlay={overlay}
       onBackdropPointerDown={() => close(true)}
       onPanelPointerEnter={cancelLeaveTimer}
       onPanelPointerLeave={handlePanelPointerLeave}

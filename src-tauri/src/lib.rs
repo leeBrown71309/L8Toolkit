@@ -16,6 +16,7 @@ mod json_file;
 mod media;
 mod notch;
 mod platform;
+mod quick_accent;
 mod search;
 mod settings;
 mod settings_sync;
@@ -35,6 +36,7 @@ use crate::hotkey::HotkeyState;
 use crate::icons::IconService;
 use crate::media::MediaService;
 use crate::notch::NotchController;
+use crate::quick_accent::QuickAccentService;
 use crate::search::SearchService;
 use crate::settings::SettingsStore;
 use crate::updates::UpdateService;
@@ -59,6 +61,11 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
+                // The test copy also logs this app's own details (Quick Accent decisions...).
+                .level_for(
+                    "l8_tools_kits_lib",
+                    if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info },
+                )
                 .build(),
         )
         .plugin(hotkey::plugin())
@@ -85,6 +92,8 @@ pub fn run() {
             commands::update_state,
             commands::update_check,
             commands::update_install,
+            commands::quick_accent_preview,
+            commands::settings_window_ready,
             commands::get_settings,
             commands::update_settings,
             commands::rebuild_index,
@@ -117,6 +126,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     app.manage(MediaService::default());
     app.manage(AudioVisualizer::default());
     app.manage(UpdateService::default());
+    app.manage(QuickAccentService::default());
 
     tray::create(app)?;
     notch::initialize(app)?;

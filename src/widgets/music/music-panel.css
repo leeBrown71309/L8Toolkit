@@ -173,78 +173,66 @@ html[data-theme="light"] .music__ambient {
 
 .progress__hit-area {
   position: relative;
-  display: flex;
-  align-items: center;
-  height: 14px;
+  height: 18px;
   outline: none;
   touch-action: none;
+  /* The cover's color; a neutral one without cover. */
+  color: var(--media-glow, var(--media-neutral));
 }
 
 .progress[data-seekable="true"] .progress__hit-area {
   cursor: pointer;
 }
 
-.progress__track {
-  position: relative;
-  width: 100%;
-  height: 4px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--fill-4);
-  transition: height 160ms var(--ease-out);
-}
-
-.progress__fill {
+.progress__wave {
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left;
-}
-
-.progress__head {
-  position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 2px;
   left: 0;
-  width: 0;
+  width: 100%;
+  overflow: visible;
   pointer-events: none;
 }
 
+.progress__played,
+.progress__remaining {
+  fill: none;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.progress__played {
+  stroke: currentColor;
+}
+
+.progress__remaining {
+  stroke: color-mix(in srgb, currentColor 24%, var(--fill-4));
+}
+
+/* The thumb is an upright pill, in the cover's color, as on recent phones. */
 .progress__thumb {
   position: absolute;
-  top: 50%;
-  left: 0;
-  width: 12px;
-  height: 12px;
+  top: 2px;
+  left: -2px;
+  width: 4px;
+  height: 14px;
   border-radius: 999px;
-  background: var(--toggle-thumb);
-  box-shadow:
-    0 1px 4px var(--keycap-shade),
-    0 0 0 1px var(--line-1);
-  transform: translate(-50%, -50%) scale(0);
-  transition: transform 160ms var(--ease-out);
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 18%, transparent);
+  pointer-events: none;
+  will-change: transform;
+  transition: box-shadow 160ms var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .progress[data-seekable="true"] .progress__hit-area:hover .progress__track {
-    height: 6px;
-  }
-
   .progress[data-seekable="true"] .progress__hit-area:hover .progress__thumb {
-    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 22%, transparent);
   }
-}
-
-.progress[data-dragging="true"] .progress__track,
-.progress__hit-area:focus-visible .progress__track {
-  height: 6px;
 }
 
 .progress[data-dragging="true"] .progress__thumb,
 .progress__hit-area:focus-visible .progress__thumb {
-  transform: translate(-50%, -50%) scale(1);
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 28%, transparent);
 }
 
 /* Elapsed time, controls, duration: one row. */
@@ -352,7 +340,7 @@ html[data-theme="light"] .music__ambient {
 
 .music__error svg {
   flex: none;
-  color: var(--accent);
+  color: var(--media-glow, var(--media-neutral));
 }
 
 /* ---------- Empty ---------- */

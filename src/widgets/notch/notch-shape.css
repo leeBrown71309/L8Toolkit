@@ -46,7 +46,7 @@
   --notch-idle-w: 196px;
   --notch-idle-h: 30px;
   --notch-open-w: 680px;
-  --media-glow: var(--accent);
+  /* --media-glow is set (inline) only when the cover gives a color. */
 
   --notch-w: var(--notch-idle-w);
   --notch-h: var(--notch-idle-h);
@@ -68,6 +68,20 @@
 /* Media playing: the idle notch grows a little, giving the light more room. */
 .notch-canvas[data-live="true"] {
   --notch-idle-w: 224px;
+}
+
+/* Quick Accent: the notch widens into a row of characters. */
+.notch-canvas[data-mode="accent"] {
+  --notch-w: var(--notch-accent-w, 220px);
+  --notch-h: 58px;
+  --notch-r: 20px;
+  --shoulder: 12px;
+  transition:
+    --notch-w 300ms var(--ease-liquid),
+    --notch-h 240ms var(--ease-drawer),
+    --notch-r 240ms var(--ease-drawer),
+    --shoulder 240ms var(--ease-drawer),
+    --media-progress 520ms linear;
 }
 
 /* A new track: the notch swells to show it, Dynamic-Island style. */
@@ -235,15 +249,15 @@
 }
 
 .notch-live-ring__track {
-  background: var(--media-glow);
+  background: var(--media-glow, var(--media-on-black));
   opacity: 0.16;
 }
 
 .notch-live-ring__fill {
   background: linear-gradient(
     to right,
-    color-mix(in srgb, var(--media-glow) 35%, transparent),
-    var(--media-glow)
+    color-mix(in srgb, var(--media-glow, var(--media-on-black)) 35%, transparent),
+    var(--media-glow, var(--media-on-black))
   );
   transform: scaleX(var(--media-progress));
   transform-origin: left;
@@ -255,7 +269,7 @@
   left: calc(var(--ring-left) + var(--ring-width) * var(--media-progress) - 22px);
   width: 44px;
   height: 36px;
-  background: radial-gradient(closest-side, #ffffff, var(--media-glow) 45%, transparent);
+  background: radial-gradient(closest-side, #ffffff, var(--media-glow, var(--media-on-black)) 45%, transparent);
   opacity: 0.85;
 }
 
@@ -277,7 +291,7 @@
   height: 30px;
   translate: -50% 0;
   border-radius: 50%;
-  background: radial-gradient(ellipse 50% 50% at 50% 30%, var(--media-glow), transparent 70%);
+  background: radial-gradient(ellipse 50% 50% at 50% 30%, var(--media-glow, var(--media-on-black)), transparent 70%);
   filter: blur(9px);
   opacity: 0;
   pointer-events: none;
@@ -419,6 +433,14 @@
     opacity 220ms var(--ease-out) 70ms,
     filter 240ms var(--ease-out) 70ms,
     transform 320ms var(--ease-drawer) 40ms;
+}
+
+/* The music light steps aside while accents are picked. As specific as the
+   live rules above (and later), so it wins whether music plays or not. */
+.notch-canvas[data-mode="accent"][data-live][data-playing] .notch-live-ring,
+.notch-canvas[data-mode="accent"][data-live][data-playing] .notch-spill {
+  opacity: 0;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

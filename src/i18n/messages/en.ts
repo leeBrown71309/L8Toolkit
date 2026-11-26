@@ -174,7 +174,8 @@ export const en = {
   "musicSettings.peek": "Show new tracks",
   "musicSettings.peek.description": "The notch briefly expands with the cover and title when the track changes.",
   "musicSettings.tint": "Colors from the cover",
-  "musicSettings.tint.description": "The light and the panel glow take the colors of the artwork. Off uses your accent color.",
+  "musicSettings.tint.description":
+    "The progress wave, the light and the panel glow take the colors of the artwork. Off, they stay neutral: your accent color is kept for Search.",
 
   "general.title": "General",
   "general.description": "L8 Toolkit lives in the tray and hosts your notch widgets.",
@@ -190,6 +191,34 @@ export const en = {
   "general.quit": "Quit",
   "general.quit.description": "Stops every widget and frees the shortcut.",
   "general.quit.button": "Quit L8 Toolkit",
+
+  // Quick Accent
+  "accent.barLabel": "Accented characters",
+  "nav.quickAccent": "Quick Accent",
+  "quickAccent.title": "Quick Accent",
+  "quickAccent.description":
+    "Type accented letters without knowing the key combinations: hold a letter, pick its accent in the notch, release.",
+  "quickAccent.activation": "Activation",
+  "quickAccent.enable": "Enable Quick Accent",
+  "quickAccent.enable.description": "Works in every app. The bar uses your accent color.",
+  "quickAccent.trigger": "Keys",
+  "quickAccent.trigger.description": "Keys that open the bar while a letter is held, then move through it.",
+  "quickAccent.trigger.spaceAndArrows": "Space and arrows",
+  "quickAccent.trigger.space": "Space",
+  "quickAccent.trigger.arrows": "Arrows",
+  "quickAccent.howTo": "How it works",
+  "quickAccent.howTo.hold": "Hold a letter",
+  "quickAccent.howTo.choose": "Open the bar and move through the accents (Shift+Space goes back, Esc cancels)",
+  "quickAccent.howTo.release": "Release the letter: the chosen accent replaces it",
+  "quickAccent.try": "Try it here: hold e, then press Space",
+  "quickAccent.languages": "Languages",
+  "quickAccent.languages.label": "Accents offered",
+  "quickAccent.languages.description":
+    "Accents of the selected languages and sets, in the order you select them. With all of them, long rows scroll as you move.",
+  "quickAccent.languages.all": "All languages",
+  "quickAccent.preview": "Characters per letter",
+  "quickAccent.set.currency": "Currencies (€ £ ¥…)",
+  "quickAccent.set.symbols": "Symbols (© ® ™ § °…)",
 
   // Updates
   "nav.updates": "Updates",

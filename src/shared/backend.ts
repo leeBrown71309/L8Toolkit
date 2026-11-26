@@ -13,6 +13,8 @@ import type {
   SearchSection,
   SettingsSnapshot,
   UpdateState,
+  AccentLanguage,
+  AccentPreviewRow,
 } from "./types";
 
 export const BACKEND_EVENTS = {
@@ -24,6 +26,7 @@ export const BACKEND_EVENTS = {
   /** Audio band levels (0-255, low to high frequencies), ~30 per second. */
   audioLevels: "media:levels",
   updateState: "update:state",
+  accentState: "accent:state",
   /** Asks the settings window to show a section (the tray's "Install update"). */
   settingsNavigate: "settings:navigate",
 } as const;
@@ -51,10 +54,14 @@ export interface Backend {
   updateCheck(): Promise<UpdateState>;
   /** Downloads, verifies and installs the newest version; the app restarts. */
   updateInstall(): Promise<void>;
+  /** Letters and their accents for these languages (empty: all). */
+  quickAccentPreview(languages: AccentLanguage[]): Promise<AccentPreviewRow[]>;
   getSettings(): Promise<SettingsSnapshot>;
   updateSettings(settings: AppSettings): Promise<SettingsSnapshot>;
   rebuildIndex(): Promise<void>;
   openSettings(): Promise<void>;
+  /** The settings page is drawn: Rust shows its (hidden) window. */
+  settingsWindowReady(): Promise<void>;
   quitApp(): Promise<void>;
   listen<T>(event: string, handler: (payload: T) => void): Promise<Unlisten>;
 }
@@ -77,10 +84,12 @@ const tauriBackend: Backend = {
   updateState: () => invoke("update_state"),
   updateCheck: () => invoke("update_check"),
   updateInstall: () => invoke("update_install"),
+  quickAccentPreview: (languages) => invoke("quick_accent_preview", { languages }),
   getSettings: () => invoke("get_settings"),
   updateSettings: (settings) => invoke("update_settings", { settings }),
   rebuildIndex: () => invoke("rebuild_index"),
   openSettings: () => invoke("open_settings"),
+  settingsWindowReady: () => invoke("settings_window_ready"),
   quitApp: () => invoke("quit_app"),
   listen: (event, handler) => listen(event, (message) => handler(message.payload as never)),
 };

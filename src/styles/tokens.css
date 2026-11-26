@@ -39,6 +39,9 @@
 
   /* The idle notch is always black: it stands for the camera housing. */
   --bezel-black: #000000;
+  /* Music without a cover color: a warm white on the black notch. The
+     accent is kept for Search; music takes its colors from the cover. */
+  --media-on-black: #ebe8e1;
 }
 
 /* ---------- Dark: Obsidian ---------- */
@@ -70,6 +73,8 @@ html[data-theme="dark"] {
   --text-3: rgb(243 242 239 / 0.46);
   --text-4: rgb(243 242 239 / 0.28);
   --toggle-thumb: #f3f2ef;
+  /* Music without a cover color, inside the panel. */
+  --media-neutral: #ebe8e1;
 
   /* Notch surface when open (solid material). */
   --notch-surface-top: var(--bezel-black);
@@ -106,6 +111,7 @@ html[data-theme="light"] {
   --text-3: rgb(25 25 28 / 0.5);
   --text-4: rgb(25 25 28 / 0.32);
   --toggle-thumb: #ffffff;
+  --media-neutral: #3b3a40;
 
   /* Darken the accent so highlighted text keeps its contrast on white. */
   --accent-strong: color-mix(in oklab, var(--accent), black 24%);

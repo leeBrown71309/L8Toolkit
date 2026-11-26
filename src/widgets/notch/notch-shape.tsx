@@ -9,8 +9,9 @@ const PROGRESS_TICK_MS = 500;
  * - idle: the small black notch (wider while media plays)
  * - peek: briefly expanded to show the new track, still non-interactive
  * - open: the full widget panel, focused
+ * - accent: the Quick Accent bar, non-interactive (focus stays in the app typed in)
  */
-export type NotchMode = "idle" | "peek" | "open";
+export type NotchMode = "idle" | "peek" | "open" | "accent";
 
 /**
  * Image behind the glass materials:
@@ -68,6 +69,8 @@ interface NotchShapeProps {
   openHeight: number;
   backdrop: NotchBackdrop | null;
   live: NotchLiveActivity | null;
+  /** Drawn over the idle notch (Quick Accent), with the width it needs. */
+  overlay: { content: ReactNode; width: number } | null;
   children: ReactNode;
   /** Pointer pressed on the transparent area around the notch. */
   onBackdropPointerDown: () => void;
@@ -94,6 +97,7 @@ export function NotchShape({
   openHeight,
   backdrop,
   live,
+  overlay,
   children,
   onBackdropPointerDown,
   onPanelPointerEnter,
@@ -104,6 +108,7 @@ export function NotchShape({
   const style = {
     "--notch-open-h": `${openHeight}px`,
     ...(live?.glow ? { "--media-glow": live.glow } : {}),
+    ...(overlay ? { "--notch-accent-w": `${overlay.width}px` } : {}),
   } as CSSProperties;
 
   const handleCanvasPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -147,6 +152,7 @@ export function NotchShape({
         <div className="notch-surface" aria-hidden="true" />
         <div className="notch-idle-cover" aria-hidden="true" />
         {live?.content}
+        {overlay?.content}
         <div className="notch-content" inert={mode !== "open"}>
           {children}
         </div>

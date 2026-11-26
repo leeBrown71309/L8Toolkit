@@ -1,13 +1,13 @@
 {
   "name": "l8-tools-kits",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "bun test scripts",
+    "test": "bun test scripts src",
     "tauri": "tauri",
     "app:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop-release-app.ps1 && tauri dev --config src-tauri/tauri.dev.conf.json",
     "app:build": "tauri build",

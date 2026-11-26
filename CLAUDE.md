@@ -48,6 +48,10 @@ runs the same checks on every pull request into `main`.
 - UI work follows the `design-taste-frontend` and `emil-design-eng` skills; animations stay on
   `transform` / `opacity` / registered custom properties.
 - Commits: `<type>(<scope>): <message>`, no AI attribution anywhere.
+- Quick Accent ignores simulated keys. A test copy started with `L8_ACCEPT_SIMULATED_KEYS=1` accepts
+  them (debug builds only) and logs its decisions at debug level, never the letters typed. Never
+  send simulated keys unless the test window is confirmed to have the focus: Windows often refuses
+  the focus to a background process, and the keys then land in the maintainer's own windows.
 
 ## Two copies of the app: test and release
 

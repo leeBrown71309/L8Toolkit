@@ -3,10 +3,18 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, typ
 import { useI18n } from "../../i18n/i18n-context";
 import type { NowPlaying } from "../../shared/types";
 import { currentPositionMs, formatDuration, usePlaybackClock } from "./use-now-playing";
+import { layoutWave, WAVE_AMPLITUDE } from "./wave-path";
 
 /** Keep showing the requested position until the player confirms the seek. */
 const SEEK_CONFIRM_TIMEOUT_MS = 1600;
 const KEYBOARD_SEEK_STEP_MS = 10_000;
+/** Height of the drawing, in CSS pixels: room for the crests and the stroke. */
+const WAVE_HEIGHT = 14;
+/** The wave travels one wavelength in this time while playing. */
+const WAVE_PERIOD_MS = 1500;
+/** Share of the gap to the target amplitude covered per 60 Hz frame. */
+const AMPLITUDE_EASE_PER_FRAME = 0.12;
+const FRAME_MS = 1000 / 60;
 
 interface PendingSeek {
   positionMs: number;
@@ -20,16 +28,25 @@ interface ProgressBarProps {
   children?: ReactNode;
 }
 
+const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 /**
- * Seekable progress bar. The fill is driven by requestAnimationFrame writing
- * transforms directly (no React render per frame), so it glides at the
- * display's refresh rate without costing the rest of the UI anything.
+ * Seekable progress line. The played part is a travelling wave (it settles
+ * into a straight line on pause), the rest a flat line, both in the cover's
+ * color. A requestAnimationFrame loop rewrites the SVG paths directly, so the
+ * wave moves at the display's refresh rate without any React render.
  */
 export function ProgressBar({ media, onSeek, children }: ProgressBarProps) {
   const { t } = useI18n();
   const trackRef = useRef<HTMLDivElement>(null);
-  const fillRef = useRef<HTMLDivElement>(null);
-  const headRef = useRef<HTMLDivElement>(null);
+  const playedRef = useRef<SVGPathElement>(null);
+  const remainingRef = useRef<SVGPathElement>(null);
+  const thumbRef = useRef<HTMLSpanElement>(null);
+  const widthRef = useRef(0);
+  const amplitudeRef = useRef(0);
+  const phaseRef = useRef(0);
+  /** Draws one frame; set by the animation effect, called again on resize. */
+  const repaintRef = useRef<(() => void) | null>(null);
   const [dragFraction, setDragFraction] = useState<number | null>(null);
   const [pendingSeek, setPendingSeek] = useState<PendingSeek | null>(null);
   const clockPosition = usePlaybackClock(media);
@@ -46,24 +63,62 @@ export function ProgressBar({ media, onSeek, children }: ProgressBarProps) {
     return () => window.clearTimeout(timer);
   }, [pendingSeek]);
 
+  // The path is laid out in pixels, so it follows the track's real width.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    // The panel may mount on a hidden tab (width 0): draw again once it shows.
+    const observer = new ResizeObserver(([entry]) => {
+      widthRef.current = entry?.contentRect.width ?? track.clientWidth;
+      repaintRef.current?.();
+    });
+    observer.observe(track);
+    widthRef.current = track.clientWidth;
+    return () => observer.disconnect();
+  }, [duration > 0]);
+
   useEffect(() => {
     if (duration <= 0) return;
+    const reducedMotion = prefersReducedMotion();
+    const targetAmplitude = media.playing ? WAVE_AMPLITUDE : 0;
     let frame = 0;
-    const paint = () => {
+    let lastTime = performance.now();
+
+    const paint = (now: number) => {
+      // Capped, so a frame after a long pause (hidden window) does not jump.
+      const elapsed = Math.min(100, now - lastTime);
+      const frames = elapsed / FRAME_MS;
+      lastTime = now;
+      const amplitude = amplitudeRef.current;
+      const settled = Math.abs(targetAmplitude - amplitude) < 0.02;
+      amplitudeRef.current = settled
+        ? targetAmplitude
+        : amplitude + (targetAmplitude - amplitude) * (1 - (1 - AMPLITUDE_EASE_PER_FRAME) ** frames);
+      if (media.playing && !reducedMotion) {
+        phaseRef.current = (phaseRef.current + (elapsed / WAVE_PERIOD_MS) * Math.PI * 2) % (Math.PI * 2);
+      }
+
       const position =
-        dragFraction !== null
-          ? dragFraction * duration
-          : pendingSeek
-            ? pendingSeek.positionMs
-            : currentPositionMs(media);
+        dragFraction !== null ? dragFraction * duration : pendingSeek ? pendingSeek.positionMs : currentPositionMs(media);
       const fraction = Math.min(1, Math.max(0, position / duration));
-      if (fillRef.current) fillRef.current.style.transform = `scaleX(${fraction})`;
-      // The head is a zero-width anchor: moving it never overflows the track.
-      if (headRef.current) headRef.current.style.left = `${fraction * 100}%`;
-      if (media.playing && dragFraction === null) frame = requestAnimationFrame(paint);
+      const layout = layoutWave(widthRef.current, WAVE_HEIGHT, fraction, amplitudeRef.current, phaseRef.current);
+      playedRef.current?.setAttribute("d", layout.played);
+      remainingRef.current?.setAttribute("d", layout.remaining);
+      if (thumbRef.current) thumbRef.current.style.transform = `translateX(${layout.thumbX}px)`;
+
+      const animating = (media.playing && !reducedMotion) || amplitudeRef.current !== targetAmplitude;
+      if (animating) frame = requestAnimationFrame(paint);
     };
-    paint();
-    return () => cancelAnimationFrame(frame);
+    repaintRef.current = () => {
+      cancelAnimationFrame(frame);
+      paint(performance.now());
+    };
+    // First drawing right away: animation frames pause while the window is hidden.
+    paint(lastTime);
+    return () => {
+      repaintRef.current = null;
+      cancelAnimationFrame(frame);
+    };
   }, [media, duration, dragFraction, pendingSeek]);
 
   // Live streams have no duration: only the controls make sense.
@@ -128,12 +183,11 @@ export function ProgressBar({ media, onSeek, children }: ProgressBarProps) {
         onPointerCancel={() => setDragFraction(null)}
         onKeyDown={handleKeyDown}
       >
-        <div className="progress__track">
-          <div ref={fillRef} className="progress__fill" />
-        </div>
-        <div ref={headRef} className="progress__head">
-          <span className="progress__thumb" />
-        </div>
+        <svg className="progress__wave" height={WAVE_HEIGHT} aria-hidden="true">
+          <path ref={remainingRef} className="progress__remaining" />
+          <path ref={playedRef} className="progress__played" />
+        </svg>
+        <span ref={thumbRef} className="progress__thumb" />
       </div>
       <div className="progress__row">
         <span className="progress__time">{formatDuration(shownPosition)}</span>

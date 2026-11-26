@@ -35,9 +35,9 @@
   border-radius: 1.5px;
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--media-glow, var(--accent)) 35%, #ffffff),
-    color-mix(in srgb, var(--media-glow, var(--accent)) 75%, #ffffff) 50%,
-    color-mix(in srgb, var(--media-glow, var(--accent)) 35%, #ffffff)
+    color-mix(in srgb, var(--media-glow, var(--media-on-black)) 35%, #ffffff),
+    color-mix(in srgb, var(--media-glow, var(--media-on-black)) 75%, #ffffff) 50%,
+    color-mix(in srgb, var(--media-glow, var(--media-on-black)) 35%, #ffffff)
   );
   /* Rest position until the first frame arrives: a row of dots. */
   transform: scaleY(0.14);

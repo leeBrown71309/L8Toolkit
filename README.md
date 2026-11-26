@@ -25,7 +25,12 @@ Widgets:
   Windows media sessions. While something plays, the folded notch shows a live activity: a light
   along its edge traces the track progress, and audio bars in its middle move with the sound
   (read from the speakers through WASAPI loopback, see `src-tauri/src/audio/`). It can briefly
-  expand on track changes; the Music tab has the cover, a seekable progress bar and the controls.
+  expand on track changes; the Music tab has the cover, a wavy seekable progress line and the
+  controls, all in the colors of the cover.
+- **Quick Accent**: hold a letter and press `Space`, `←` or `→`: its accented characters drop out
+  of the notch; move with the same keys (`Shift+Space` goes back, `Esc` cancels) and release the
+  letter to type the chosen one, in any app. 29 languages plus currencies and symbols, chosen in
+  Settings › Quick Accent (`src-tauri/src/quick_accent/`).
 
 Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` / `Ctrl+2`.
 The interface is available in English and French (Settings > General > Language; "System" follows
@@ -135,6 +140,7 @@ src-tauri/src/            Rust core
   backdrop.rs             wallpaper (Mica) and screen snapshot (Acrylic) images
   media.rs                now playing: session watcher, change detection, playback commands
   audio/                  audio bars: loopback capture loop, FFT band levels (spectrum.rs)
+  quick_accent/           Quick Accent: keyboard hook logic (machine.rs), accents per language
   updates.rs              in-app updates: periodic check, notification, signed install
   appearance.rs           window theme for the light/dark setting
   indexer.rs              background (re)indexing every 15 minutes

@@ -25,6 +25,13 @@ fn read_user_dword(subkey: PCWSTR, value: PCWSTR) -> Option<u32> {
     (status == ERROR_SUCCESS).then_some(data)
 }
 
+/// Apps mode chosen in Settings > Personalization > Colors (light unless set to dark).
+pub fn system_prefers_light() -> bool {
+    read_user_dword(w!("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"), w!("AppsUseLightTheme"))
+        .map(|value| value != 0)
+        .unwrap_or(true)
+}
+
 /// The accent color chosen in Settings > Personalization > Colors.
 pub fn system_accent_color() -> Option<String> {
     read_user_dword(w!("Software\\Microsoft\\Windows\\DWM"), w!("AccentColor")).map(abgr_to_hex)

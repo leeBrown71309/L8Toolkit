@@ -8,7 +8,8 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, GetClassNameW, GetCursorPos, GetDesktopWindow, GetForegroundWindow,
-    GetShellWindow, GetWindowRect, GetWindowThreadProcessId, IsWindow, IsZoomed, SetForegroundWindow,
+    GetShellWindow, GetWindowRect, GetWindowThreadProcessId, IsWindow, IsZoomed, SetForegroundWindow, ShowWindow,
+    SW_SHOWNOACTIVATE,
 };
 
 use crate::platform::ScreenRect;
@@ -18,6 +19,15 @@ const DESKTOP_WINDOW_CLASSES: [&str; 2] = ["WorkerW", "Progman"];
 
 fn to_hwnd(handle: isize) -> HWND {
     HWND(handle as *mut c_void)
+}
+
+/// Shows a window without taking the focus from the app the user types in.
+pub fn show_without_activation(handle: isize) {
+    if handle == 0 {
+        return;
+    }
+    // SAFETY: the handle is our own notch window; the return value is the previous visibility.
+    let _ = unsafe { ShowWindow(to_hwnd(handle), SW_SHOWNOACTIVATE) };
 }
 
 pub fn foreground_window() -> isize {
@@ -110,11 +120,22 @@ pub fn fullscreen_foreground_rect(own_window: isize) -> Option<ScreenRect> {
 }
 
 unsafe fn is_desktop_host(hwnd: HWND) -> bool {
+    DESKTOP_WINDOW_CLASSES.contains(&class_name(hwnd).as_str())
+}
+
+fn class_name(hwnd: HWND) -> String {
     let mut buffer = [0u16; 64];
-    let length = GetClassNameW(hwnd, &mut buffer);
+    // SAFETY: reads the class name into a local buffer.
+    let length = unsafe { GetClassNameW(hwnd, &mut buffer) };
     if length <= 0 {
-        return false;
+        return String::new();
     }
-    let class_name = String::from_utf16_lossy(&buffer[..length as usize]);
-    DESKTOP_WINDOW_CLASSES.contains(&class_name.as_str())
+    String::from_utf16_lossy(&buffer[..length as usize])
+}
+
+/// Window class of the focused window, for diagnostics (never its title,
+/// which can name the user's documents).
+pub fn foreground_window_class() -> String {
+    // SAFETY: read-only query.
+    class_name(unsafe { GetForegroundWindow() })
 }
