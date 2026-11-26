@@ -1,0 +1,79 @@
+/*
+ * Quick Accent inside the notch. The notch is black in this mode whatever
+ * the theme, so the characters are light; the selection uses the accent
+ * color chosen in the settings, with --accent-ink for the text on it.
+ * Geometry follows --notch-w / --notch-h, which animate during the morph.
+ */
+.accent-bar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--notch-w);
+  height: var(--notch-h);
+  translate: -50% 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms var(--ease-out);
+}
+
+.accent-bar[data-visible="true"] {
+  opacity: 1;
+  transition: opacity 180ms var(--ease-out) 60ms;
+}
+
+.accent-bar__row {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  display: flex;
+}
+
+.accent-bar__selection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--accent);
+  box-shadow:
+    0 0 18px -2px color-mix(in srgb, var(--accent) 55%, transparent),
+    inset 0 1px 0 rgb(255 255 255 / 0.25);
+  transition: transform 150ms var(--ease-out);
+}
+
+.accent-bar__cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 36px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  color: rgb(243 242 239 / 0.86);
+  animation: accent-cell-in 220ms var(--ease-out) both;
+  transition: color 120ms var(--ease-out);
+}
+
+.accent-bar__cell[aria-selected="true"] {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+@keyframes accent-cell-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accent-bar__selection {
+    transition: none;
+  }
+
+  .accent-bar__cell {
+    animation: none;
+  }
+}

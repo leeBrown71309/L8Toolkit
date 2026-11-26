@@ -8,7 +8,8 @@ use windows::Win32::Graphics::Gdi::{
 use windows::Win32::System::Threading::{AttachThreadInput, GetCurrentThreadId};
 use windows::Win32::UI::WindowsAndMessaging::{
     BringWindowToTop, GetClassNameW, GetCursorPos, GetDesktopWindow, GetForegroundWindow,
-    GetShellWindow, GetWindowRect, GetWindowThreadProcessId, IsWindow, IsZoomed, SetForegroundWindow,
+    GetShellWindow, GetWindowRect, GetWindowThreadProcessId, IsWindow, IsZoomed, SetForegroundWindow, ShowWindow,
+    SW_SHOWNOACTIVATE,
 };
 
 use crate::platform::ScreenRect;
@@ -18,6 +19,15 @@ const DESKTOP_WINDOW_CLASSES: [&str; 2] = ["WorkerW", "Progman"];
 
 fn to_hwnd(handle: isize) -> HWND {
     HWND(handle as *mut c_void)
+}
+
+/// Shows a window without taking the focus from the app the user types in.
+pub fn show_without_activation(handle: isize) {
+    if handle == 0 {
+        return;
+    }
+    // SAFETY: the handle is our own notch window; the return value is the previous visibility.
+    let _ = unsafe { ShowWindow(to_hwnd(handle), SW_SHOWNOACTIVATE) };
 }
 
 pub fn foreground_window() -> isize {

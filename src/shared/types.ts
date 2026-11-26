@@ -73,6 +73,32 @@ export interface MusicSettings {
   showAudioBars: boolean;
 }
 
+/** Languages whose accents Quick Accent offers (codes stored in the settings). */
+export type AccentLanguage = "fr" | "es" | "pt" | "de" | "it" | "nl" | "tr" | "pl" | "ro" | "cs" | "nordic";
+
+/** Keys that open the accent bar and move through it. */
+export type AccentTrigger = "spaceAndArrows" | "space" | "arrows";
+
+export interface QuickAccentSettings {
+  enabled: boolean;
+  /** In priority order; empty means every language. */
+  languages: AccentLanguage[];
+  trigger: AccentTrigger;
+}
+
+/** One letter and its accents, for the settings preview. */
+export interface AccentPreviewRow {
+  letter: string;
+  characters: string[];
+}
+
+/** What the accent bar shows, sent by quick_accent/mod.rs. */
+export interface AccentBarState {
+  visible: boolean;
+  characters: string[];
+  index: number;
+}
+
 export type LanguagePreference = "system" | "en" | "fr";
 
 export interface AppSettings {
@@ -82,6 +108,7 @@ export interface AppSettings {
   appearance: AppearanceSettings;
   spotlight: SpotlightSettings;
   music: MusicSettings;
+  quickAccent: QuickAccentSettings;
 }
 
 export interface AppStatus {

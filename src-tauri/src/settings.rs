@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::i18n::{Language, LanguagePreference};
 use crate::json_file;
+use crate::platform;
+use crate::quick_accent::{AccentLanguage, AccentTrigger};
 
 pub const DEFAULT_SPOTLIGHT_HOTKEY: &str = "Alt+Space";
 
@@ -134,6 +136,24 @@ pub struct AppSettings {
     pub appearance: AppearanceSettings,
     pub spotlight: SpotlightSettings,
     pub music: MusicSettings,
+    pub quick_accent: QuickAccentSettings,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct QuickAccentSettings {
+    pub enabled: bool,
+    /// Languages whose accents are offered, in priority order. Empty: all.
+    pub languages: Vec<AccentLanguage>,
+    pub trigger: AccentTrigger,
+}
+
+impl Default for QuickAccentSettings {
+    /// The Windows display language when it has accents, otherwise all.
+    fn default() -> Self {
+        let system = platform::system_primary_language().and_then(AccentLanguage::from_windows_primary_language);
+        Self { enabled: true, languages: system.into_iter().collect(), trigger: AccentTrigger::default() }
+    }
 }
 
 impl Default for AppSettings {
@@ -145,6 +165,7 @@ impl Default for AppSettings {
             appearance: AppearanceSettings::default(),
             spotlight: SpotlightSettings::default(),
             music: MusicSettings::default(),
+            quick_accent: QuickAccentSettings::default(),
         }
     }
 }

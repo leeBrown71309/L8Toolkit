@@ -1,7 +1,7 @@
 //! Placeholder implementations for platforms that are not supported yet.
 //! They fail loudly (returning errors) instead of silently doing nothing.
 
-use super::{InstalledApp, MediaArtwork, MediaCommand, MediaSnapshot, ScreenRect, ShellVerb};
+use super::{HookEvent, InstalledApp, MediaArtwork, MediaCommand, MediaSnapshot, ScreenRect, ShellVerb};
 
 const UNSUPPORTED: &str = "This feature is not implemented on this platform yet";
 
@@ -30,6 +30,24 @@ impl MediaSessions {
         unsupported()
     }
 }
+
+pub type KeyHandler = Box<dyn Fn(HookEvent) -> bool + Send + Sync>;
+
+pub struct KeyboardHook;
+
+pub fn install_keyboard_hook(_handler: KeyHandler) -> Result<KeyboardHook, String> {
+    unsupported()
+}
+
+pub fn caps_lock_on() -> bool {
+    false
+}
+
+pub fn type_replacing(_erase: u32, _character: char) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn show_without_activation(_handle: isize) {}
 
 pub struct LoopbackCapture;
 

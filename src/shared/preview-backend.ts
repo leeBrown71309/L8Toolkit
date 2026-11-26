@@ -7,12 +7,14 @@ import type {
   SearchSection,
   SettingsSnapshot,
   UpdateState,
+  AccentPreviewRow,
 } from "./types";
 
 /**
  * In-browser stand-in for the Rust backend, used only when the UI runs outside
  * Tauri (`bun run dev` in a browser) so the design can be iterated on quickly.
  * Trigger events from the console: `window.l8Preview.emit("notch:opened", { source: "hotkey" })`.
+ * Accent bar: `window.l8Preview.emit("accent:state", { visible: true, characters: ["é", "è", "ê", "ë"], index: 1 })`.
  */
 
 const PREVIEW_APPS = [
@@ -76,6 +78,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     extraFolders: ["D:\\Projects"],
   },
   music: { enabled: true, showInNotch: true, peekOnTrackChange: true, artworkTint: true, showAudioBars: true },
+  quickAccent: { enabled: true, languages: ["fr"], trigger: "spaceAndArrows" },
 };
 
 function previewResult(kind: ResultKind, title: string, subtitle: string, matchIndices: number[] = []): SearchResult {
@@ -247,6 +250,18 @@ export function createPreviewBackend(): Backend {
     },
     mediaOpenSource: async () => console.info("[preview] open player"),
     audioBarsSetVisible: async (visible) => setAudioBars(visible),
+    quickAccentPreview: async (languages) => {
+      const french: AccentPreviewRow[] = [
+        { letter: "a", characters: ["à", "â", "æ", "ä"] },
+        { letter: "c", characters: ["ç"] },
+        { letter: "e", characters: ["é", "è", "ê", "ë"] },
+        { letter: "i", characters: ["î", "ï"] },
+        { letter: "o", characters: ["ô", "œ", "ö"] },
+        { letter: "u", characters: ["ù", "û", "ü"] },
+        { letter: "y", characters: ["ÿ"] },
+      ];
+      return languages.length === 1 && languages[0] === "fr" ? french : [...french, { letter: "n", characters: ["ñ", "ń", "ň"] }];
+    },
     updateState: async () => updateState,
     updateCheck: async () => {
       setUpdateState({ status: "checking" });

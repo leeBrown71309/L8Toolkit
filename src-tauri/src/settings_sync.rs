@@ -5,6 +5,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::audio::{self, AudioVisualizer};
+use crate::quick_accent::QuickAccentService;
 use crate::appearance;
 use crate::hotkey;
 use crate::i18n::Language;
@@ -49,6 +50,7 @@ pub fn apply_on_startup(app: &AppHandle) {
         log::warn!("{error}");
     }
     appearance::apply(app);
+    app.state::<QuickAccentService>().configure(app, &settings.quick_accent);
 }
 
 pub fn apply(app: &AppHandle, requested: AppSettings) -> Result<SettingsSnapshot, String> {
@@ -76,6 +78,9 @@ pub fn apply(app: &AppHandle, requested: AppSettings) -> Result<SettingsSnapshot
     }
     if !next.spotlight.enabled {
         notch::collapse(app, true);
+    }
+    if next.quick_accent != previous.quick_accent {
+        app.state::<QuickAccentService>().configure(app, &next.quick_accent);
     }
     if !audio::bars_enabled(app) {
         app.state::<AudioVisualizer>().set_wanted(false);

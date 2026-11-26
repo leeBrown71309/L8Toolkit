@@ -5,6 +5,7 @@ use tauri::{AppHandle, Manager, State};
 
 use crate::actions::{self, ActionOutcome, ExecuteAction};
 use crate::audio::{self, AudioVisualizer};
+use crate::quick_accent::{self, AccentLanguage, AccentPreviewRow};
 use crate::icons::IconService;
 use crate::i18n::{tr, Text};
 use crate::indexer;
@@ -151,4 +152,10 @@ pub async fn update_check(app: AppHandle) -> UpdateState {
 #[tauri::command]
 pub async fn update_install(app: AppHandle) -> Result<(), String> {
     updates::install(&app).await
+}
+
+/// Letters and their accents for these languages (Settings › Quick Accent).
+#[tauri::command]
+pub fn quick_accent_preview(languages: Vec<AccentLanguage>) -> Vec<AccentPreviewRow> {
+    quick_accent::preview(&languages)
 }

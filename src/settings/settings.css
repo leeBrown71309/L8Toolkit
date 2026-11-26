@@ -695,3 +695,150 @@
     animation: none;
   }
 }
+
+/* ---------- Quick Accent ---------- */
+
+.accent-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--text-2);
+  /* An explicit counter: flex items are no longer list items. */
+  counter-reset: accent-step;
+}
+
+.accent-steps li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  counter-increment: accent-step;
+}
+
+.accent-steps li::before {
+  content: counter(accent-step);
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.accent-try {
+  width: 100%;
+  height: 36px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-tile);
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text-1);
+  background: var(--fill-1);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  outline: none;
+  transition: box-shadow 150ms ease;
+}
+
+.accent-try:focus {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.accent-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.accent-language {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--fill-1);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 120ms var(--ease-out);
+}
+
+.accent-language[aria-pressed="true"] {
+  color: var(--text-1);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.accent-language[aria-pressed="true"] svg {
+  color: var(--accent);
+}
+
+.accent-language:active {
+  transform: scale(0.97);
+}
+
+.accent-language__rank {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.accent-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 16px;
+  margin-top: 12px;
+}
+
+.accent-preview__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.accent-preview__letter {
+  width: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.accent-preview__characters {
+  letter-spacing: 0.08em;
+  color: var(--text-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .accent-language:hover {
+    color: var(--text-1);
+    background: var(--fill-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accent-language,
+  .accent-try {
+    transition: none;
+  }
+}
