@@ -53,6 +53,10 @@ pub fn type_replacing(_erase: u32, _character: char) -> Result<(), String> {
 
 pub fn show_without_activation(_handle: isize) {}
 
+pub fn system_prefers_light() -> bool {
+    false
+}
+
 pub fn foreground_window_class() -> String {
     String::new()
 }

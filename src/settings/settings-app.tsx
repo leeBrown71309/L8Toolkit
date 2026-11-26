@@ -8,13 +8,13 @@ import {
   TextAa,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import appIcon from "../assets/app-icon.png";
 import { useI18n } from "../i18n/i18n-context";
 import type { MessageKey } from "../i18n/messages/en";
 import { useApplyAppearance } from "../shared/appearance";
-import { BACKEND_EVENTS } from "../shared/backend";
+import { backend, BACKEND_EVENTS } from "../shared/backend";
 import { useBackendEvent } from "../shared/use-backend-event";
 import { AppearanceSection } from "./sections/appearance-section";
 import { GeneralSection } from "./sections/general-section";
@@ -68,6 +68,17 @@ export function SettingsApp() {
   });
   const { snapshot, error } = controller;
   useApplyAppearance(snapshot?.settings.appearance, snapshot?.systemAccentColor ?? null);
+
+  // The window opens hidden (no white flash): reveal it once the real content
+  // and the theme are in place, not on the loading skeleton.
+  const contentReady = snapshot !== null || error !== null;
+  useEffect(() => {
+    if (!contentReady) return;
+    const timer = window.setTimeout(() => {
+      backend.settingsWindowReady().catch((revealError: unknown) => console.error("Cannot show the window", revealError));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [contentReady]);
 
   return (
     <div className="settings">

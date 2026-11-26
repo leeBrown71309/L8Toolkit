@@ -154,6 +154,12 @@ pub async fn update_install(app: AppHandle) -> Result<(), String> {
     updates::install(&app).await
 }
 
+/// The settings page has drawn its first content: the window can appear.
+#[tauri::command]
+pub fn settings_window_ready(app: AppHandle) {
+    settings_window::reveal(&app, "page ready");
+}
+
 /// Letters and their accents for these languages (Settings › Quick Accent).
 #[tauri::command]
 pub fn quick_accent_preview(languages: Vec<AccentLanguage>) -> Vec<AccentPreviewRow> {

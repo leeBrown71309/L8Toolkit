@@ -27,7 +27,7 @@ pub use loopback::LoopbackCapture;
 pub use media::MediaSessions;
 pub use screen::{capture_screen_rgba, desktop_wallpaper_path};
 pub use shell::{lock_workstation, reveal_in_file_manager, shell_open};
-pub use system_colors::system_accent_color;
+pub use system_colors::{system_accent_color, system_prefers_light};
 pub use window::{
     cursor_position, force_foreground, foreground_window, foreground_window_class, fullscreen_foreground_rect,
     restore_foreground, show_without_activation,

@@ -60,6 +60,8 @@ export interface Backend {
   updateSettings(settings: AppSettings): Promise<SettingsSnapshot>;
   rebuildIndex(): Promise<void>;
   openSettings(): Promise<void>;
+  /** The settings page is drawn: Rust shows its (hidden) window. */
+  settingsWindowReady(): Promise<void>;
   quitApp(): Promise<void>;
   listen<T>(event: string, handler: (payload: T) => void): Promise<Unlisten>;
 }
@@ -87,6 +89,7 @@ const tauriBackend: Backend = {
   updateSettings: (settings) => invoke("update_settings", { settings }),
   rebuildIndex: () => invoke("rebuild_index"),
   openSettings: () => invoke("open_settings"),
+  settingsWindowReady: () => invoke("settings_window_ready"),
   quitApp: () => invoke("quit_app"),
   listen: (event, handler) => listen(event, (message) => handler(message.payload as never)),
 };

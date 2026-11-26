@@ -93,6 +93,7 @@ pub fn run() {
             commands::update_check,
             commands::update_install,
             commands::quick_accent_preview,
+            commands::settings_window_ready,
             commands::get_settings,
             commands::update_settings,
             commands::rebuild_index,

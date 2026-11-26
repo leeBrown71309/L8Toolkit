@@ -285,6 +285,7 @@ export function createPreviewBackend(): Backend {
     },
     rebuildIndex: async () => console.info("[preview] rebuild index"),
     openSettings: async () => console.info("[preview] open settings"),
+    settingsWindowReady: async () => undefined,
     quitApp: async () => console.info("[preview] quit"),
     listen: async <T,>(event: string, handler: (payload: T) => void): Promise<Unlisten> => {
       const handlers = listeners.get(event) ?? new Set();
