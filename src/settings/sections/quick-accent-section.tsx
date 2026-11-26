@@ -16,11 +16,36 @@ const LANGUAGES: { code: AccentLanguage; name: string }[] = [
   { code: "de", name: "Deutsch" },
   { code: "it", name: "Italiano" },
   { code: "nl", name: "Nederlands" },
+  { code: "ca", name: "Català" },
   { code: "tr", name: "Türkçe" },
   { code: "pl", name: "Polski" },
   { code: "ro", name: "Română" },
   { code: "cs", name: "Čeština" },
+  { code: "sk", name: "Slovenčina" },
+  { code: "hu", name: "Magyar" },
+  { code: "hr", name: "Hrvatski · Srpski · Bosanski" },
+  { code: "sl", name: "Slovenščina" },
   { code: "nordic", name: "Dansk · Norsk · Svenska" },
+  { code: "fi", name: "Suomi" },
+  { code: "is", name: "Íslenska" },
+  { code: "et", name: "Eesti" },
+  { code: "lv", name: "Latviešu" },
+  { code: "lt", name: "Lietuvių" },
+  { code: "mt", name: "Malti" },
+  { code: "cy", name: "Cymraeg" },
+  { code: "ga", name: "Gaeilge · Gàidhlig" },
+  { code: "sq", name: "Shqip" },
+  { code: "ku", name: "Kurdî" },
+  { code: "eo", name: "Esperanto" },
+  { code: "vi", name: "Tiếng Việt" },
+  { code: "mi", name: "Te Reo Māori" },
+  { code: "pinyin", name: "Pīnyīn" },
+];
+
+/** Sets that are not languages; their names are translated. */
+const EXTRA_SETS: { code: AccentLanguage; labelKey: "quickAccent.set.currency" | "quickAccent.set.symbols" }[] = [
+  { code: "currency", labelKey: "quickAccent.set.currency" },
+  { code: "symbols", labelKey: "quickAccent.set.symbols" },
 ];
 
 interface QuickAccentSectionProps {
@@ -99,7 +124,7 @@ export function QuickAccentSection({ snapshot, controller }: QuickAccentSectionP
               {settings.languages.length === 0 && <Check size={13} weight="bold" />}
               {t("quickAccent.languages.all")}
             </button>
-            {LANGUAGES.map(({ code, name }) => {
+            {[...LANGUAGES, ...EXTRA_SETS.map(({ code, labelKey }) => ({ code, name: t(labelKey) }))].map(({ code, name }) => {
               const position = settings.languages.indexOf(code);
               return (
                 <button

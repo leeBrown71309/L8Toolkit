@@ -15,21 +15,31 @@ use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::GetCurrentThreadId;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    GetKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
-    KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK, VK_CAPITAL,
+    GetAsyncKeyState, GetKeyState, SendInput, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYBD_EVENT_FLAGS,
+    KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VIRTUAL_KEY, VK_BACK, VK_CAPITAL, VK_CONTROL, VK_LWIN, VK_MENU, VK_RWIN,
+    VK_SHIFT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx, HC_ACTION,
     KBDLLHOOKSTRUCT, LLKHF_INJECTED, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN,
 };
 
-use crate::platform::{HookEvent, HookKey};
+use crate::platform::{HookEvent, HookKey, PressedModifiers};
 
 /// Returns true to keep the key from reaching applications.
 pub type KeyHandler = Box<dyn Fn(HookEvent) -> bool + Send + Sync>;
 
 /// One hook at a time; the callback (a plain function) reaches it here.
 static HANDLER: Mutex<Option<KeyHandler>> = Mutex::new(None);
+
+/// Marks the keys this app types itself, so the hook never reacts to them.
+const OWN_INPUT_MARK: usize = 0x4C38_4143; // "L8AC"
+
+/// Development builds can be driven by simulated keys (automated tests) when
+/// L8_ACCEPT_SIMULATED_KEYS is set; real builds only listen to the keyboard.
+fn accepts_simulated_keys() -> bool {
+    cfg!(debug_assertions) && std::env::var_os("L8_ACCEPT_SIMULATED_KEYS").is_some()
+}
 
 /// Removes the hook and stops its thread when dropped.
 pub struct KeyboardHook {
@@ -99,8 +109,9 @@ unsafe extern "system" fn hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -
         // SAFETY: for WH_KEYBOARD_LL with HC_ACTION, lparam points to a KBDLLHOOKSTRUCT.
         let info = unsafe { &*(lparam.0 as *const KBDLLHOOKSTRUCT) };
         // Our own typed text comes back through the hook: let it pass untouched.
+        let own_input = info.dwExtraInfo == OWN_INPUT_MARK;
         let injected = info.flags.0 & LLKHF_INJECTED.0 != 0;
-        if !injected {
+        if !own_input && (!injected || accepts_simulated_keys()) {
             let message = wparam.0 as u32;
             let event = HookEvent {
                 key: hook_key(info.vkCode),
@@ -136,6 +147,19 @@ fn hook_key(virtual_key: u32) -> HookKey {
     }
 }
 
+/// Modifiers held right now. Inside the hook this is the state before the
+/// key being reported, which is exactly what decides if a letter is a shortcut.
+pub fn pressed_modifiers() -> PressedModifiers {
+    // SAFETY: plain key state queries; a negative value means "held".
+    let held = |key: VIRTUAL_KEY| unsafe { GetAsyncKeyState(i32::from(key.0)) } < 0;
+    PressedModifiers {
+        shift: held(VK_SHIFT),
+        control: held(VK_CONTROL),
+        alt: held(VK_MENU),
+        windows: held(VK_LWIN) || held(VK_RWIN),
+    }
+}
+
 pub fn caps_lock_on() -> bool {
     // SAFETY: plain key state query; the low bit is the toggle state.
     unsafe { GetKeyState(i32::from(VK_CAPITAL.0)) & 1 == 1 }
@@ -144,7 +168,7 @@ pub fn caps_lock_on() -> bool {
 fn key_input(key: VIRTUAL_KEY, scan: u16, flags: KEYBD_EVENT_FLAGS) -> INPUT {
     INPUT {
         r#type: INPUT_KEYBOARD,
-        Anonymous: INPUT_0 { ki: KEYBDINPUT { wVk: key, wScan: scan, dwFlags: flags, time: 0, dwExtraInfo: 0 } },
+        Anonymous: INPUT_0 { ki: KEYBDINPUT { wVk: key, wScan: scan, dwFlags: flags, time: 0, dwExtraInfo: OWN_INPUT_MARK } },
     }
 }
 

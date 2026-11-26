@@ -23,7 +23,7 @@ use tauri::{AppHandle, Emitter};
 
 pub use characters::{characters_for, AccentLanguage};
 pub use machine::AccentTrigger;
-use machine::{AccentMachine, Command};
+use machine::{AccentMachine, Command, Key};
 
 use crate::notch;
 use crate::platform::{self, KeyboardHook};
@@ -132,9 +132,18 @@ fn hook_handler(app: AppHandle, state: Arc<HookState>, commands: Sender<Command>
             return false;
         }
         let settings = state.settings.read().unwrap_or_else(|poisoned| poisoned.into_inner());
-        let decision = machine.handle(event, Instant::now(), settings.trigger, platform::caps_lock_on(), |letter| {
-            characters_for(letter, &settings.languages, false).len()
-        });
+        let decision = machine.handle(
+            event,
+            Instant::now(),
+            settings.trigger,
+            platform::caps_lock_on(),
+            platform::pressed_modifiers(),
+            |letter| characters_for(letter, &settings.languages, false).len(),
+        );
+        if matches!(event.key, Key::Space | Key::Left | Key::Right) && event.down && decision.command.is_none() {
+            // Why an activation key did nothing (never logs which letter is typed).
+            log::debug!("Quick Accent: {:?} passed through ({})", event.key, machine.describe());
+        }
         if let Some(command) = decision.command {
             let _ = commands.send(command);
         }
@@ -148,6 +157,10 @@ fn start_worker(app: AppHandle, state: Arc<HookState>, commands: Receiver<Comman
         let mut letter = 'a';
         // Ends when the hook (the only sender) is dropped.
         while let Ok(command) = commands.recv() {
+            log::debug!(
+                "Quick Accent: {command:?} (focused window class: {})",
+                platform::foreground_window_class()
+            );
             let languages = state.settings.read().unwrap_or_else(|poisoned| poisoned.into_inner()).languages.clone();
             let characters = |letter: char, uppercase: bool| -> Vec<String> {
                 characters_for(letter, &languages, uppercase).into_iter().map(String::from).collect()
@@ -171,10 +184,15 @@ fn start_worker(app: AppHandle, state: Arc<HookState>, commands: Receiver<Comman
                     let chosen = characters_for(letter, &languages, uppercase).get(index).copied();
                     bar = AccentBarState::hidden();
                     publish(&app, &bar);
-                    if let Some(character) = chosen {
-                        if let Err(error) = platform::type_replacing(erase, character) {
-                            log::warn!("{error}");
-                        }
+                    match chosen {
+                        Some(character) => match platform::type_replacing(erase, character) {
+                            Ok(()) => log::debug!(
+                                "Quick Accent: typed into window class {}",
+                                platform::foreground_window_class()
+                            ),
+                            Err(error) => log::warn!("{error}"),
+                        },
+                        None => log::warn!("Quick Accent: no character at position {index}"),
                     }
                     hide_after_animation(&app, &state);
                 }

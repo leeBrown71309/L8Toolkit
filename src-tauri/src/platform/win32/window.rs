@@ -120,11 +120,22 @@ pub fn fullscreen_foreground_rect(own_window: isize) -> Option<ScreenRect> {
 }
 
 unsafe fn is_desktop_host(hwnd: HWND) -> bool {
+    DESKTOP_WINDOW_CLASSES.contains(&class_name(hwnd).as_str())
+}
+
+fn class_name(hwnd: HWND) -> String {
     let mut buffer = [0u16; 64];
-    let length = GetClassNameW(hwnd, &mut buffer);
+    // SAFETY: reads the class name into a local buffer.
+    let length = unsafe { GetClassNameW(hwnd, &mut buffer) };
     if length <= 0 {
-        return false;
+        return String::new();
     }
-    let class_name = String::from_utf16_lossy(&buffer[..length as usize]);
-    DESKTOP_WINDOW_CLASSES.contains(&class_name.as_str())
+    String::from_utf16_lossy(&buffer[..length as usize])
+}
+
+/// Window class of the focused window, for diagnostics (never its title,
+/// which can name the user's documents).
+pub fn foreground_window_class() -> String {
+    // SAFETY: read-only query.
+    class_name(unsafe { GetForegroundWindow() })
 }

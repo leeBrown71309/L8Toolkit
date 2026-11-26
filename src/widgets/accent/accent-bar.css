@@ -21,11 +21,33 @@
   transition: opacity 180ms var(--ease-out) 60ms;
 }
 
-.accent-bar__row {
+.accent-bar__viewport {
   position: absolute;
   bottom: 10px;
   left: 12px;
+  height: 36px;
+  overflow: hidden;
+  border-radius: 11px;
+}
+
+/* More characters beyond an edge: that edge fades, hinting at the rest. */
+.accent-bar__viewport[data-more-before="true"] {
+  mask-image: linear-gradient(to right, transparent, black 48px);
+}
+
+.accent-bar__viewport[data-more-after="true"] {
+  mask-image: linear-gradient(to left, transparent, black 48px);
+}
+
+.accent-bar__viewport[data-more-before="true"][data-more-after="true"] {
+  mask-image: linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent);
+}
+
+.accent-bar__row {
+  position: relative;
   display: flex;
+  width: max-content;
+  transition: transform 180ms var(--ease-out);
 }
 
 .accent-bar__selection {
@@ -44,6 +66,8 @@
 
 .accent-bar__cell {
   position: relative;
+  /* Fixed cells: the selection and the scrolling count in 40px steps. */
+  flex: none;
   display: grid;
   place-items: center;
   width: 40px;
@@ -69,6 +93,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .accent-bar__row,
   .accent-bar__selection {
     transition: none;
   }

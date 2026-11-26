@@ -1,7 +1,7 @@
 //! Placeholder implementations for platforms that are not supported yet.
 //! They fail loudly (returning errors) instead of silently doing nothing.
 
-use super::{HookEvent, InstalledApp, MediaArtwork, MediaCommand, MediaSnapshot, ScreenRect, ShellVerb};
+use super::{HookEvent, InstalledApp, PressedModifiers, MediaArtwork, MediaCommand, MediaSnapshot, ScreenRect, ShellVerb};
 
 const UNSUPPORTED: &str = "This feature is not implemented on this platform yet";
 
@@ -39,6 +39,10 @@ pub fn install_keyboard_hook(_handler: KeyHandler) -> Result<KeyboardHook, Strin
     unsupported()
 }
 
+pub fn pressed_modifiers() -> PressedModifiers {
+    PressedModifiers::default()
+}
+
 pub fn caps_lock_on() -> bool {
     false
 }
@@ -48,6 +52,10 @@ pub fn type_replacing(_erase: u32, _character: char) -> Result<(), String> {
 }
 
 pub fn show_without_activation(_handle: isize) {}
+
+pub fn foreground_window_class() -> String {
+    String::new()
+}
 
 pub struct LoopbackCapture;
 

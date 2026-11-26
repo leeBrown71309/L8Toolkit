@@ -214,9 +214,11 @@ export const en = {
   "quickAccent.languages": "Languages",
   "quickAccent.languages.label": "Accents offered",
   "quickAccent.languages.description":
-    "Accents of the selected languages, in the order you select them. With all languages, the list is longer.",
+    "Accents of the selected languages and sets, in the order you select them. With all of them, long rows scroll as you move.",
   "quickAccent.languages.all": "All languages",
-  "quickAccent.preview": "Letters with accents",
+  "quickAccent.preview": "Characters per letter",
+  "quickAccent.set.currency": "Currencies (€ £ ¥…)",
+  "quickAccent.set.symbols": "Symbols (© ® ™ § °…)",
 
   // Updates
   "nav.updates": "Updates",

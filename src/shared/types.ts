@@ -73,8 +73,11 @@ export interface MusicSettings {
   showAudioBars: boolean;
 }
 
-/** Languages whose accents Quick Accent offers (codes stored in the settings). */
-export type AccentLanguage = "fr" | "es" | "pt" | "de" | "it" | "nl" | "tr" | "pl" | "ro" | "cs" | "nordic";
+/** Character sets Quick Accent offers (codes stored in the settings, see characters.rs). */
+export type AccentLanguage =
+  | "fr" | "es" | "pt" | "de" | "it" | "nl" | "ca" | "tr" | "pl" | "ro" | "cs" | "sk" | "hu" | "hr" | "sl"
+  | "nordic" | "fi" | "is" | "et" | "lv" | "lt" | "mt" | "cy" | "ga" | "sq" | "ku" | "eo" | "vi" | "mi"
+  | "pinyin" | "currency" | "symbols";
 
 /** Keys that open the accent bar and move through it. */
 export type AccentTrigger = "spaceAndArrows" | "space" | "arrows";

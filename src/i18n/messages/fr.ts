@@ -218,9 +218,11 @@ export const fr: Record<MessageKey, string> = {
   "quickAccent.languages": "Langues",
   "quickAccent.languages.label": "Accents proposés",
   "quickAccent.languages.description":
-    "Les accents des langues sélectionnées, dans l'ordre où vous les sélectionnez. Avec toutes les langues, la liste est plus longue.",
+    "Les accents des langues et ensembles sélectionnés, dans l'ordre où vous les sélectionnez. Avec tous, les longues rangées défilent pendant que vous avancez.",
   "quickAccent.languages.all": "Toutes les langues",
-  "quickAccent.preview": "Lettres accentuées",
+  "quickAccent.preview": "Caractères par lettre",
+  "quickAccent.set.currency": "Monnaies (€ £ ¥…)",
+  "quickAccent.set.symbols": "Symboles (© ® ™ § °…)",
 
   // Mises à jour
   "nav.updates": "Mises à jour",

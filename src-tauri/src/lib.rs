@@ -61,6 +61,11 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
+                // The test copy also logs this app's own details (Quick Accent decisions...).
+                .level_for(
+                    "l8_tools_kits_lib",
+                    if cfg!(debug_assertions) { log::LevelFilter::Debug } else { log::LevelFilter::Info },
+                )
                 .build(),
         )
         .plugin(hotkey::plugin())

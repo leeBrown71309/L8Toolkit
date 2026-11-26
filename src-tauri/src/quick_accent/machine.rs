@@ -14,9 +14,9 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 /// How long a letter must be held before an activation key opens the bar.
-pub const ACTIVATION_DELAY: Duration = Duration::from_millis(250);
+pub const ACTIVATION_DELAY: Duration = Duration::from_millis(150);
 
-pub use crate::platform::{HookEvent as KeyEvent, HookKey as Key};
+pub use crate::platform::{HookEvent as KeyEvent, HookKey as Key, PressedModifiers};
 
 /// Which keys open the bar and move through it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
@@ -87,26 +87,16 @@ struct OpenBar {
     index: usize,
 }
 
-#[derive(Debug, Default)]
-struct Modifiers {
-    shift: bool,
-    control: bool,
-    alt: bool,
-    windows: bool,
-}
-
-impl Modifiers {
-    /// Ctrl, Alt (and AltGr) or Windows turn letters into shortcuts.
-    fn shortcut(&self) -> bool {
-        self.control || self.alt || self.windows
-    }
+/// Ctrl, Alt (and AltGr) or Windows turn letters into shortcuts.
+fn is_shortcut(modifiers: &PressedModifiers) -> bool {
+    modifiers.control || modifiers.alt || modifiers.windows
 }
 
 #[derive(Debug, Default)]
 pub struct AccentMachine {
     held: Option<HeldLetter>,
     bar: Option<OpenBar>,
-    modifiers: Modifiers,
+    modifiers: PressedModifiers,
     /// Activation keys whose press was swallowed: their release is too.
     swallowed_down: Vec<Key>,
     caps_lock: bool,
@@ -117,6 +107,15 @@ impl AccentMachine {
         self.bar.is_some()
     }
 
+    /// State summary for diagnostics, without the letter itself.
+    pub fn describe(&self) -> String {
+        let held = match self.held {
+            Some(held) => format!("letter held {} ms", held.since.elapsed().as_millis()),
+            None => "no letter held".to_string(),
+        };
+        format!("{held}, shortcut modifiers: {}", is_shortcut(&self.modifiers))
+    }
+
     /// Forgets everything (settings changed, the notch opened...).
     pub fn reset(&mut self) -> Option<Command> {
         self.held = None;
@@ -124,18 +123,27 @@ impl AccentMachine {
         self.bar.take().map(|_| Command::Hide)
     }
 
-    /// `count` tells how many characters a letter offers (0: none).
+    /// `pressed` is what Windows reports as held before this event; `count`
+    /// tells how many characters a letter offers (0: none).
+    ///
+    /// Modifiers come from Windows rather than from the events seen here: a
+    /// release can happen while the hook ignores keys (Alt+Space opens the
+    /// notch, which handles its own keys) or never be reported (Win+L). A
+    /// modifier believed held forever would turn every letter into a shortcut.
     pub fn handle(
         &mut self,
         event: KeyEvent,
         now: Instant,
         trigger: AccentTrigger,
         caps_lock: bool,
+        pressed: PressedModifiers,
         count: impl Fn(char) -> usize,
     ) -> Decision {
         self.caps_lock = caps_lock;
+        let shift_before = self.modifiers.shift;
+        self.modifiers = pressed;
         match event.key {
-            Key::Shift => self.on_shift(event.down),
+            Key::Shift => self.on_shift(shift_before, event.down),
             Key::Control => {
                 self.modifiers.control = event.down;
                 Decision::PASS
@@ -167,8 +175,8 @@ impl AccentMachine {
         self.modifiers.shift != self.caps_lock
     }
 
-    fn on_shift(&mut self, down: bool) -> Decision {
-        let changed = self.modifiers.shift != down;
+    fn on_shift(&mut self, before: bool, down: bool) -> Decision {
+        let changed = before != down;
         self.modifiers.shift = down;
         if changed && self.bar.is_some() {
             Decision::pass(Some(Command::ChangeCase { uppercase: self.uppercase() }))
@@ -178,7 +186,7 @@ impl AccentMachine {
     }
 
     fn on_letter_down(&mut self, letter: char, now: Instant) -> Decision {
-        if self.modifiers.shortcut() {
+        if is_shortcut(&self.modifiers) {
             self.held = None;
             return Decision::PASS;
         }
@@ -242,7 +250,7 @@ impl AccentMachine {
         }
 
         let Some(held) = self.held else { return Decision::PASS };
-        if self.modifiers.shortcut() || now.saturating_duration_since(held.since) < ACTIVATION_DELAY {
+        if is_shortcut(&self.modifiers) || now.saturating_duration_since(held.since) < ACTIVATION_DELAY {
             return Decision::PASS;
         }
         let available = count(held.letter);
@@ -268,21 +276,39 @@ mod tests {
 
     const HELD: Duration = Duration::from_millis(400);
 
+    /// Plays the role of Windows: the machine sees events, Windows knows
+    /// which modifiers are really held.
     struct Harness {
         machine: AccentMachine,
         trigger: AccentTrigger,
         caps_lock: bool,
+        pressed: PressedModifiers,
     }
 
     impl Harness {
         fn new() -> Self {
-            Harness { machine: AccentMachine::default(), trigger: AccentTrigger::SpaceAndArrows, caps_lock: false }
+            Harness {
+                machine: AccentMachine::default(),
+                trigger: AccentTrigger::SpaceAndArrows,
+                caps_lock: false,
+                pressed: PressedModifiers::default(),
+            }
         }
 
         fn key(&mut self, key: Key, down: bool, now: Instant) -> Decision {
             // 'e' offers 4 characters, 'k' none.
             let count = |letter: char| if letter == 'e' { 4 } else { 0 };
-            self.machine.handle(KeyEvent { key, down }, now, self.trigger, self.caps_lock, count)
+            let event = KeyEvent { key, down };
+            let decision = self.machine.handle(event, now, self.trigger, self.caps_lock, self.pressed, count);
+            // Windows updates its own state after the hook ran.
+            match key {
+                Key::Shift => self.pressed.shift = down,
+                Key::Control => self.pressed.control = down,
+                Key::Alt => self.pressed.alt = down,
+                Key::Windows => self.pressed.windows = down,
+                _ => {}
+            }
+            decision
         }
 
         /// Presses `letter` and returns the moment it has been held long enough.
@@ -398,6 +424,26 @@ mod tests {
         let later = harness.hold('e');
         assert_eq!(harness.key(Key::Space, true, later), Decision::PASS);
         assert!(harness.key(Key::Right, true, later).swallow);
+    }
+
+    #[test]
+    fn a_modifier_released_out_of_sight_does_not_stick() {
+        // Alt+Space opens the notch: the hook ignores keys while it is open,
+        // so the machine sees Alt go down but never come back up.
+        let mut harness = Harness::new();
+        harness.key(Key::Alt, true, Instant::now());
+        harness.pressed.alt = false; // released while the notch was open
+        let later = harness.hold('e');
+        let decision = harness.key(Key::Space, true, later);
+        assert_eq!(decision.command, Some(Command::Show { letter: 'e', index: 0, uppercase: false }));
+    }
+
+    #[test]
+    fn a_real_shortcut_still_wins() {
+        let mut harness = Harness::new();
+        harness.pressed.control = true; // Ctrl held, its press seen elsewhere
+        let later = harness.hold('e');
+        assert_eq!(harness.key(Key::Space, true, later), Decision::PASS);
     }
 
     #[test]

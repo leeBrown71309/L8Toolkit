@@ -76,6 +76,15 @@ pub enum HookKey {
     Other,
 }
 
+/// Modifier keys physically held, as Windows itself knows them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct PressedModifiers {
+    pub shift: bool,
+    pub control: bool,
+    pub alt: bool,
+    pub windows: bool,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct HookEvent {
     pub key: HookKey,
