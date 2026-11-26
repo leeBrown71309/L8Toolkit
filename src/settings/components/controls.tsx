@@ -54,6 +54,50 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
   );
 }
 
+interface StepperProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  /** Shown after the number ("min"). */
+  unit?: string;
+  disabled?: boolean;
+  decreaseLabel: string;
+  increaseLabel: string;
+  onChange: (value: number) => void;
+}
+
+/** A small number with − and + buttons, for counts and durations. */
+export function Stepper({ label, value, min, max, unit, disabled = false, decreaseLabel, increaseLabel, onChange }: StepperProps) {
+  const set = (next: number) => onChange(Math.min(max, Math.max(min, next)));
+  return (
+    <div className="stepper" role="group" aria-label={label} data-disabled={disabled}>
+      <button
+        type="button"
+        className="stepper__button"
+        aria-label={`${decreaseLabel} (${label})`}
+        disabled={disabled || value <= min}
+        onClick={() => set(value - 1)}
+      >
+        −
+      </button>
+      <span className="stepper__value" aria-live="polite">
+        {value}
+        {unit && <span className="stepper__unit">{unit}</span>}
+      </span>
+      <button
+        type="button"
+        className="stepper__button"
+        aria-label={`${increaseLabel} (${label})`}
+        disabled={disabled || value >= max}
+        onClick={() => set(value + 1)}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 interface SettingsGroupProps {
   title: string;
   children: ReactNode;

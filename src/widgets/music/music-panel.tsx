@@ -10,6 +10,7 @@ import { Equalizer } from "./equalizer";
 import { ProgressBar } from "./progress-bar";
 import { currentPositionMs } from "./use-now-playing";
 
+import "../shared/transport-button.css";
 import "./music-panel.css";
 
 const ERROR_DURATION_MS = 3200;

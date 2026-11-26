@@ -1,3 +1,4 @@
+import { createPreviewTimer } from "./preview-timer";
 import type { Backend, Unlisten } from "./backend";
 import type {
   AppSettings,
@@ -15,6 +16,7 @@ import type {
  * Tauri (`bun run dev` in a browser) so the design can be iterated on quickly.
  * Trigger events from the console: `window.l8Preview.emit("notch:opened", { source: "hotkey" })`.
  * Accent bar: `window.l8Preview.emit("accent:state", { visible: true, characters: ["é", "è", "ê", "ë"], index: 1 })`.
+ * Timer: `window.l8Preview.timer.apply({ type: "startCountdown", durationMs: 60000 })` (`?timerSpeed=40` runs it faster).
  */
 
 const PREVIEW_APPS = [
@@ -80,6 +82,16 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
   music: { enabled: true, showInNotch: true, peekOnTrackChange: true, artworkTint: true, showAudioBars: true },
   quickAccent: { enabled: true, languages: ["fr"], trigger: "spaceAndArrows" },
+  timer: {
+    enabled: true,
+    showInNotch: true,
+    notify: true,
+    focusMinutes: 25,
+    shortBreakMinutes: 5,
+    longBreakMinutes: 15,
+    roundsBeforeLongBreak: 4,
+    autoContinue: true,
+  },
 };
 
 function previewResult(kind: ResultKind, title: string, subtitle: string, matchIndices: number[] = []): SearchResult {
@@ -227,7 +239,9 @@ export function createPreviewBackend(): Backend {
     emit("update:state", next);
   };
 
-  (window as unknown as { l8Preview: unknown }).l8Preview = { emit, setMedia, previewTrack, setRemoteAudio, setUpdateState };
+  const timer = createPreviewTimer(() => snapshot.settings.timer, emit);
+
+  (window as unknown as { l8Preview: unknown }).l8Preview = { emit, setMedia, previewTrack, setRemoteAudio, setUpdateState, timer };
 
   return {
     search: async (query) => previewSearch(query),
@@ -278,6 +292,9 @@ export function createPreviewBackend(): Backend {
       }
       setUpdateState({ status: "installing", version: "0.2.0" });
     },
+    timerState: async () => timer.snapshot(),
+    timerCommand: async (request) => timer.apply(request),
+    notchSetLayout: async () => undefined,
     getSettings: async () => snapshot,
     updateSettings: async (settings) => {
       snapshot = { ...snapshot, settings };

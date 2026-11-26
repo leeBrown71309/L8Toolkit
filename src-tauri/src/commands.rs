@@ -17,6 +17,7 @@ use crate::search::{SearchResult, SearchSection, SearchService};
 use crate::settings::{AppSettings, SettingsStore};
 use crate::settings_sync::{self, SettingsSnapshot};
 use crate::settings_window;
+use crate::timer::{self, TimerRequest, TimerService, TimerSnapshot};
 use crate::updates::{self, UpdateService, UpdateState};
 use crate::usage::UsageStore;
 
@@ -164,4 +165,22 @@ pub fn settings_window_ready(app: AppHandle) {
 #[tauri::command]
 pub fn quick_accent_preview(languages: Vec<AccentLanguage>) -> Vec<AccentPreviewRow> {
     quick_accent::preview(&languages)
+}
+
+#[tauri::command]
+pub fn timer_state(timer: State<'_, TimerService>) -> TimerSnapshot {
+    timer.snapshot()
+}
+
+/// Start, pause, resume, reset, add time or skip (Timer tab).
+#[tauri::command]
+pub fn timer_command(app: AppHandle, request: TimerRequest) -> TimerSnapshot {
+    timer::apply(&app, request)
+}
+
+/// The folded notch shows a second activity in a bubble beside it: the
+/// pointer resting on that bubble opens the panel on it.
+#[tauri::command]
+pub fn notch_set_layout(controller: State<'_, NotchController>, bubble: bool) {
+    controller.set_bubble(bubble);
 }

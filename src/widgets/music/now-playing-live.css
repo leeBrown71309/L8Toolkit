@@ -144,6 +144,32 @@
   }
 }
 
+/* The bubble beside the notch: a round cover inside the progress ring. */
+.music-bubble {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+  border-radius: 999px;
+  color: rgb(243 242 239 / 0.7);
+  background: #1d1d21;
+  transition:
+    opacity 300ms ease,
+    filter 300ms ease;
+}
+
+.music-bubble[data-playing="false"] {
+  opacity: 0.6;
+  filter: saturate(0.6);
+}
+
+.music-bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ---------- Equalizer (shared by the live activity and the panel) ---------- */
 
 .equalizer {

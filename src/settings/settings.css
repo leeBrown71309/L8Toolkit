@@ -262,6 +262,64 @@
   box-shadow: inset 0 1px 0 var(--highlight);
 }
 
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--ink-1);
+  box-shadow: inset 0 1px 2px var(--well-shade), inset 0 0 0 1px var(--line-1);
+}
+
+.stepper[data-disabled="true"] {
+  opacity: 0.5;
+}
+
+.stepper__button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--text-2);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 140ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stepper__button:not(:disabled):hover {
+    color: var(--text-1);
+    background: var(--ink-4);
+  }
+}
+
+.stepper__button:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+.stepper__button:disabled {
+  opacity: 0.35;
+}
+
+.stepper__value {
+  min-width: 52px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-1);
+}
+
+.stepper__unit {
+  margin-left: 3px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
 .button {
   display: inline-flex;
   align-items: center;

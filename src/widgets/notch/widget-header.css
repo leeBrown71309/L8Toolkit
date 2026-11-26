@@ -110,3 +110,7 @@
     }
   }
 }
+
+.widget-tab[data-running="true"] svg {
+  color: var(--accent);
+}

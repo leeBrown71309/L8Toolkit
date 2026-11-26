@@ -1,4 +1,4 @@
-import { GearSix, type Icon, MagnifyingGlass, MusicNotesSimple } from "@phosphor-icons/react";
+import { GearSix, type Icon, MagnifyingGlass, MusicNotesSimple, Timer } from "@phosphor-icons/react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { useI18n } from "../../i18n/i18n-context";
@@ -11,6 +11,7 @@ import "./widget-header.css";
 const TAB_META: Record<WidgetTab, { labelKey: MessageKey; icon: Icon }> = {
   search: { labelKey: "widget.search", icon: MagnifyingGlass },
   music: { labelKey: "widget.music", icon: MusicNotesSimple },
+  timer: { labelKey: "widget.timer", icon: Timer },
 };
 
 interface IndicatorBox {
@@ -23,6 +24,8 @@ interface WidgetHeaderProps {
   active: WidgetTab;
   /** Media playing: the Music tab shows a live equalizer. */
   musicPlaying: boolean;
+  /** A timer counts down: its tab icon takes the accent color. */
+  timerRunning: boolean;
   onSelect: (tab: WidgetTab) => void;
   onOpenSettings: () => void;
 }
@@ -31,7 +34,7 @@ interface WidgetHeaderProps {
  * Widget switcher living in the notch's "camera" strip. The active pill
  * slides between tabs, so switching reads as one motion, not two states.
  */
-export function WidgetHeader({ tabs, active, musicPlaying, onSelect, onOpenSettings }: WidgetHeaderProps) {
+export function WidgetHeader({ tabs, active, musicPlaying, timerRunning, onSelect, onOpenSettings }: WidgetHeaderProps) {
   const { t } = useI18n();
   const tabRefs = useRef(new Map<WidgetTab, HTMLButtonElement>());
   const [indicator, setIndicator] = useState<IndicatorBox | null>(null);
@@ -76,6 +79,7 @@ export function WidgetHeader({ tabs, active, musicPlaying, onSelect, onOpenSetti
               type="button"
               className="widget-tab"
               data-active={isActive}
+              data-running={tab === "timer" && timerRunning}
               aria-current={isActive ? "page" : undefined}
               title={t("widget.switchHint", { widget: label })}
               onClick={() => onSelect(tab)}

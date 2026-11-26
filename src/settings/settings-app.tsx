@@ -6,6 +6,7 @@ import {
   Palette,
   SlidersHorizontal,
   TextAa,
+  Timer,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -21,13 +22,14 @@ import { GeneralSection } from "./sections/general-section";
 import { MusicSection } from "./sections/music-section";
 import { QuickAccentSection } from "./sections/quick-accent-section";
 import { SpotlightSection } from "./sections/spotlight-section";
+import { TimerSection } from "./sections/timer-section";
 import { UpdatesSection } from "./sections/updates-section";
 import { useSettingsController } from "./use-settings-controller";
 import { useUpdateState } from "./use-update-state";
 
 import "./settings.css";
 
-type SectionKey = "general" | "spotlight" | "appearance" | "music" | "quickAccent" | "updates";
+type SectionKey = "general" | "spotlight" | "appearance" | "music" | "timer" | "quickAccent" | "updates";
 
 interface NavigationItem {
   key: SectionKey;
@@ -39,6 +41,7 @@ const NAVIGATION: NavigationItem[] = [
   { key: "spotlight", labelKey: "nav.spotlight", icon: MagnifyingGlass },
   { key: "appearance", labelKey: "nav.appearance", icon: Palette },
   { key: "music", labelKey: "nav.music", icon: MusicNotesSimple },
+  { key: "timer", labelKey: "nav.timer", icon: Timer },
   { key: "quickAccent", labelKey: "nav.quickAccent", icon: TextAa },
   { key: "general", labelKey: "nav.general", icon: SlidersHorizontal },
   { key: "updates", labelKey: "nav.updates", icon: ArrowsClockwise },
@@ -132,6 +135,7 @@ export function SettingsApp() {
               )}
               {section === "appearance" && <AppearanceSection snapshot={snapshot} controller={controller} />}
               {section === "music" && <MusicSection snapshot={snapshot} controller={controller} />}
+              {section === "timer" && <TimerSection snapshot={snapshot} controller={controller} />}
               {section === "quickAccent" && <QuickAccentSection snapshot={snapshot} controller={controller} />}
               {section === "general" && <GeneralSection snapshot={snapshot} controller={controller} />}
               {section === "updates" && <UpdatesSection snapshot={snapshot} updates={updates} />}

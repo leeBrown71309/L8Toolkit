@@ -21,6 +21,7 @@ use crate::fullscreen_pause;
 use crate::media::MediaService;
 use crate::platform;
 use crate::settings::{Material, SettingsStore};
+use crate::timer::TimerService;
 
 pub const NOTCH_WINDOW_LABEL: &str = "notch";
 const WINDOW_WIDTH: f64 = 760.0;
@@ -30,6 +31,10 @@ const WINDOW_HEIGHT: f64 = 540.0;
 const IDLE_LIVE_NOTCH_WIDTH: f64 = 224.0;
 const IDLE_NOTCH_HEIGHT: f64 = 30.0;
 const HOVER_ZONE_PADDING: f64 = 10.0;
+/// The bubble holding a second activity beside the folded notch. Must match
+/// `.notch-bubble` in `notch-shape.css`.
+const BUBBLE_GAP: f64 = 8.0;
+const BUBBLE_SIZE: f64 = 30.0;
 const POINTER_POLL_INTERVAL: Duration = Duration::from_millis(50);
 /// ~150 ms of resting on the notch before it opens, so passing by does not.
 const HOVER_DWELL_TICKS: u32 = 3;
@@ -50,10 +55,20 @@ pub enum OpenSource {
     Tray,
 }
 
+/// Which part of the folded notch the pointer rested on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum HoverZone {
+    Notch,
+    /// The bubble beside the notch (a second activity).
+    Bubble,
+}
+
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct OpenedPayload {
     source: OpenSource,
+    zone: HoverZone,
     /// Screen behind the notch (Acrylic material), as a PNG data URL.
     backdrop: Option<String>,
 }
@@ -79,6 +94,11 @@ pub struct NotchController {
     own_window: AtomicIsize,
     /// A bar shown over the idle notch (Quick Accent) keeps the window visible.
     overlay_active: AtomicBool,
+    /// The folded notch shows a bubble beside it (two activities at once).
+    bubble: AtomicBool,
+    /// Kept visible for a moment (a timer alert peeks in the idle notch).
+    held: AtomicBool,
+    hold_generation: AtomicU64,
     collapse_generation: AtomicU64,
     placement: Mutex<Placement>,
 }
@@ -92,6 +112,10 @@ pub struct NotchSnapshot {
 impl NotchController {
     pub fn snapshot(&self) -> NotchSnapshot {
         NotchSnapshot { is_open: self.is_open.load(Ordering::SeqCst) }
+    }
+
+    pub fn set_bubble(&self, shown: bool) {
+        self.bubble.store(shown, Ordering::SeqCst);
     }
 
     fn placement(&self) -> Placement {
@@ -130,7 +154,14 @@ pub fn initialize(app: &AppHandle) -> Result<(), String> {
 
 /// Opens the notch with the Spotlight panel focused.
 pub fn open(app: &AppHandle, source: OpenSource) {
-    let enabled = app.state::<SettingsStore>().read(|settings| settings.spotlight.enabled || settings.music.enabled);
+    open_at(app, source, HoverZone::Notch);
+}
+
+/// Opens the notch; `zone` tells the web layer which activity was pointed at.
+fn open_at(app: &AppHandle, source: OpenSource, zone: HoverZone) {
+    let enabled = app.state::<SettingsStore>().read(|settings| {
+        settings.spotlight.enabled || settings.music.enabled || settings.timer.enabled
+    });
     if !enabled {
         return;
     }
@@ -167,7 +198,7 @@ pub fn open(app: &AppHandle, source: OpenSource) {
     log_failure("make the notch interactive", window.set_ignore_cursor_events(false));
     log_failure(
         "notify the notch",
-        app.emit_to(NOTCH_WINDOW_LABEL, events::OPENED, OpenedPayload { source, backdrop }),
+        app.emit_to(NOTCH_WINDOW_LABEL, events::OPENED, OpenedPayload { source, zone, backdrop }),
     );
     log_failure("focus the notch", window.set_focus());
     // Windows may refuse focus to a background app (hover opens); force it on
@@ -257,6 +288,24 @@ pub fn set_overlay(app: &AppHandle, active: bool) {
     }
 }
 
+/// Keeps the idle notch visible for `duration`, even if nothing else wants
+/// it (a countdown that just ended peeks its alert in it).
+pub fn hold_visible(app: &AppHandle, duration: Duration) {
+    let controller = app.state::<NotchController>();
+    let generation = controller.hold_generation.fetch_add(1, Ordering::SeqCst) + 1;
+    controller.held.store(true, Ordering::SeqCst);
+    sync_idle_visibility(app);
+    let app = app.clone();
+    thread::spawn(move || {
+        thread::sleep(duration);
+        let controller = app.state::<NotchController>();
+        if controller.hold_generation.load(Ordering::SeqCst) == generation {
+            controller.held.store(false, Ordering::SeqCst);
+            sync_idle_visibility(&app);
+        }
+    });
+}
+
 /// A fullscreen app (game, video) covers the notch's monitor.
 pub fn is_covered_by_fullscreen_app(app: &AppHandle) -> bool {
     app.state::<NotchController>().fullscreen_app_active.load(Ordering::SeqCst)
@@ -267,16 +316,20 @@ pub fn is_fullscreen_app_focused(app: &AppHandle) -> bool {
     app.state::<NotchController>().fullscreen_app_focused.load(Ordering::SeqCst)
 }
 
-/// The idle notch shows when the user keeps it, or while media plays and
-/// the music live activity is on.
+/// The idle notch shows when the user keeps it, or while an activity (media,
+/// a timer) is shown in it.
 fn idle_notch_wanted(app: &AppHandle) -> bool {
-    let (always, while_playing) = app.state::<SettingsStore>().read(|settings| {
+    let (always, while_playing, while_timing) = app.state::<SettingsStore>().read(|settings| {
         (
             settings.spotlight.enabled && settings.spotlight.show_idle_notch,
             settings.music.enabled && settings.music.show_in_notch,
+            settings.timer.enabled && settings.timer.show_in_notch,
         )
     });
-    always || (while_playing && app.state::<MediaService>().is_active())
+    always
+        || app.state::<NotchController>().held.load(Ordering::SeqCst)
+        || (while_playing && app.state::<MediaService>().is_active())
+        || (while_timing && app.state::<TimerService>().is_active())
 }
 
 fn place_on_primary_monitor(app: &AppHandle, window: &WebviewWindow, controller: &NotchController) {
@@ -339,11 +392,21 @@ pub fn is_in_hover_zone(placement: &Placement, x: i32, y: i32) -> bool {
     x >= center - half_width && x <= center + half_width && y >= placement.y && y <= bottom
 }
 
+/// True when the pointer is on the bubble beside the folded notch.
+pub fn is_in_bubble_zone(placement: &Placement, x: i32, y: i32) -> bool {
+    let center = placement.x + placement.width / 2;
+    let left = center + ((IDLE_LIVE_NOTCH_WIDTH / 2.0 + BUBBLE_GAP - HOVER_ZONE_PADDING / 2.0) * placement.scale) as i32;
+    let right = center + ((IDLE_LIVE_NOTCH_WIDTH / 2.0 + BUBBLE_GAP + BUBBLE_SIZE + HOVER_ZONE_PADDING) * placement.scale) as i32;
+    let bottom = placement.y + ((BUBBLE_SIZE + HOVER_ZONE_PADDING) * placement.scale) as i32;
+    x > left && x <= right && y >= placement.y && y <= bottom
+}
+
 /// Polls the pointer (cheap: one system call) instead of installing a global
 /// mouse hook, which would add latency to every mouse move system-wide.
 fn start_pointer_watch(app: AppHandle) {
     let spawned = thread::Builder::new().name("notch-pointer-watch".into()).spawn(move || {
         let mut dwell_ticks = 0u32;
+        let mut hovered_zone: Option<HoverZone> = None;
         let mut tick = 0u32;
         loop {
             thread::sleep(POINTER_POLL_INTERVAL);
@@ -363,12 +426,23 @@ fn start_pointer_watch(app: AppHandle) {
                 continue;
             }
 
-            let hovering = platform::cursor_position()
-                .is_some_and(|(x, y)| is_in_hover_zone(&placement, x, y));
-            dwell_ticks = if hovering { dwell_ticks + 1 } else { 0 };
-            if dwell_ticks >= HOVER_DWELL_TICKS {
+            let bubble = controller.bubble.load(Ordering::SeqCst);
+            // The bubble is checked first: its zone touches the notch's padding.
+            let zone = platform::cursor_position().and_then(|(x, y)| {
+                if bubble && is_in_bubble_zone(&placement, x, y) {
+                    Some(HoverZone::Bubble)
+                } else {
+                    is_in_hover_zone(&placement, x, y).then_some(HoverZone::Notch)
+                }
+            });
+            if zone != hovered_zone {
                 dwell_ticks = 0;
-                open(&app, OpenSource::Hover);
+                hovered_zone = zone;
+            }
+            dwell_ticks = if zone.is_some() { dwell_ticks + 1 } else { 0 };
+            if let (true, Some(zone)) = (dwell_ticks >= HOVER_DWELL_TICKS, zone) {
+                dwell_ticks = 0;
+                open_at(&app, OpenSource::Hover, zone);
             }
         }
     });
@@ -415,5 +489,15 @@ mod tests {
         assert!(is_in_hover_zone(&placement, center + 200, 70));
         assert!(!is_in_hover_zone(&placement, center + 250, 10));
         assert!(!is_in_hover_zone(&placement, center, 90));
+    }
+
+    #[test]
+    fn bubble_zone_sits_right_of_the_notch() {
+        let placement = Placement { x: 0, y: 0, width: 760, height: 540, scale: 1.0, on_primary_monitor: true };
+        let center = 380;
+        assert!(is_in_bubble_zone(&placement, center + 135, 15));
+        assert!(!is_in_bubble_zone(&placement, center + 60, 15), "the notch itself");
+        assert!(!is_in_bubble_zone(&placement, center - 135, 15), "nothing on the left");
+        assert!(!is_in_bubble_zone(&placement, center + 135, 60));
     }
 }

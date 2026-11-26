@@ -67,6 +67,7 @@ export const en = {
   // Widget tabs
   "widget.search": "Search",
   "widget.music": "Music",
+  "widget.timer": "Timer",
   "widget.tabs": "Widgets",
   "widget.switchHint": "{widget} (Alt+← / Alt+→ to switch)",
   "widget.openSettings": "Settings",
@@ -82,6 +83,31 @@ export const en = {
   "music.positionValue": "{position} of {duration}",
   "music.empty.title": "Nothing is playing",
   "music.empty.text": "Play music or a video in any app. It shows up here and in the notch.",
+
+  // Timer
+  "timer.countdown": "Timer",
+  "timer.pomodoro": "Pomodoro",
+  "timer.mode": "Kind of timer",
+  "timer.phase.focus": "Focus",
+  "timer.phase.shortBreak": "Short break",
+  "timer.phase.longBreak": "Long break",
+  "timer.start": "Start",
+  "timer.pause": "Pause",
+  "timer.resume": "Resume",
+  "timer.reset": "Stop",
+  "timer.addMinute": "Add a minute",
+  "timer.skip": "Skip to the next phase",
+  "timer.presets": "Durations",
+  "timer.minutes": "{count} min",
+  "timer.paused": "Paused",
+  "timer.round": "Session {current} of {total}",
+  "timer.plan": "{focus} min of focus, then a {short} min break. A {long} min break after {rounds} sessions.",
+  "timer.adjustHint": "↑ ↓ or the mouse wheel to adjust",
+  "timer.done.title": "Time's up",
+  "timer.done.focus": "Focus session complete",
+  "timer.done.break": "Break is over",
+  "timer.next.started": "Now: {phase}",
+  "timer.next.ready": "Next: {phase}, start it when ready",
 
   // Shortcut recorder
   "hotkey.prompt": "Press a shortcut",
@@ -198,6 +224,30 @@ export const en = {
 
   // Quick Accent
   "accent.barLabel": "Accented characters",
+  "nav.timer": "Timer",
+  "timerSettings.title": "Timer",
+  "timerSettings.description":
+    "A countdown or a Pomodoro that keeps running with the notch closed, and shows in it.",
+  "timerSettings.widget": "Widget",
+  "timerSettings.enable": "Enable Timer",
+  "timerSettings.enable.description": "Adds the Timer tab (Ctrl+3 in the notch).",
+  "timerSettings.inNotch": "In the notch",
+  "timerSettings.live": "Show the running timer",
+  "timerSettings.live.description":
+    "The folded notch shows the time left and its light fills as time passes. With music playing too, one of them moves to a small bubble beside the notch.",
+  "timerSettings.notify": "Notification at the end",
+  "timerSettings.notify.description": "A Windows notification, with its sound, when a timer or a Pomodoro phase ends.",
+  "timerSettings.pomodoro": "Pomodoro",
+  "timerSettings.focus": "Focus",
+  "timerSettings.shortBreak": "Short break",
+  "timerSettings.longBreak": "Long break",
+  "timerSettings.rounds": "Sessions before a long break",
+  "timerSettings.autoContinue": "Chain the phases",
+  "timerSettings.autoContinue.description": "The break, then the next session, start by themselves. Off, each one waits for you.",
+  "timerSettings.minutes": "min",
+  "timerSettings.decrease": "Less",
+  "timerSettings.increase": "More",
+
   "nav.quickAccent": "Quick Accent",
   "quickAccent.title": "Quick Accent",
   "quickAccent.description":

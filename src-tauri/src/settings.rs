@@ -140,6 +140,50 @@ pub struct AppSettings {
     pub spotlight: SpotlightSettings,
     pub music: MusicSettings,
     pub quick_accent: QuickAccentSettings,
+    pub timer: TimerSettings,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct TimerSettings {
+    pub enabled: bool,
+    /// The running timer in the folded notch (light along the edge, time left).
+    pub show_in_notch: bool,
+    /// Windows notification when a period ends.
+    pub notify: bool,
+    pub focus_minutes: u32,
+    pub short_break_minutes: u32,
+    pub long_break_minutes: u32,
+    /// Focus sessions before a long break.
+    pub rounds_before_long_break: u32,
+    /// The next Pomodoro phase starts by itself.
+    pub auto_continue: bool,
+}
+
+impl Default for TimerSettings {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            show_in_notch: true,
+            notify: true,
+            focus_minutes: 25,
+            short_break_minutes: 5,
+            long_break_minutes: 15,
+            rounds_before_long_break: 4,
+            auto_continue: true,
+        }
+    }
+}
+
+impl TimerSettings {
+    /// Keeps hand-edited files within sensible bounds.
+    pub fn sanitized(mut self) -> Self {
+        self.focus_minutes = self.focus_minutes.clamp(1, 180);
+        self.short_break_minutes = self.short_break_minutes.clamp(1, 60);
+        self.long_break_minutes = self.long_break_minutes.clamp(1, 120);
+        self.rounds_before_long_break = self.rounds_before_long_break.clamp(1, 12);
+        self
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -170,6 +214,7 @@ impl Default for AppSettings {
             spotlight: SpotlightSettings::default(),
             music: MusicSettings::default(),
             quick_accent: QuickAccentSettings::default(),
+            timer: TimerSettings::default(),
         }
     }
 }

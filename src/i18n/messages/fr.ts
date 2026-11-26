@@ -65,6 +65,7 @@ export const fr: Record<MessageKey, string> = {
   // Onglets des widgets
   "widget.search": "Recherche",
   "widget.music": "Musique",
+  "widget.timer": "Minuteur",
   "widget.tabs": "Widgets",
   "widget.switchHint": "{widget} (Alt+← / Alt+→ pour changer)",
   "widget.openSettings": "Paramètres",
@@ -80,6 +81,31 @@ export const fr: Record<MessageKey, string> = {
   "music.positionValue": "{position} sur {duration}",
   "music.empty.title": "Aucune lecture en cours",
   "music.empty.text": "Lancez de la musique ou une vidéo dans n'importe quelle app. Elle s'affichera ici et dans l'encoche.",
+
+  // Minuteur
+  "timer.countdown": "Minuteur",
+  "timer.pomodoro": "Pomodoro",
+  "timer.mode": "Type de minuteur",
+  "timer.phase.focus": "Concentration",
+  "timer.phase.shortBreak": "Pause courte",
+  "timer.phase.longBreak": "Pause longue",
+  "timer.start": "Démarrer",
+  "timer.pause": "Pause",
+  "timer.resume": "Reprendre",
+  "timer.reset": "Arrêter",
+  "timer.addMinute": "Ajouter une minute",
+  "timer.skip": "Passer à la phase suivante",
+  "timer.presets": "Durées",
+  "timer.minutes": "{count} min",
+  "timer.paused": "En pause",
+  "timer.round": "Session {current} sur {total}",
+  "timer.plan": "{focus} min de concentration, puis {short} min de pause. Une pause de {long} min après {rounds} sessions.",
+  "timer.adjustHint": "↑ ↓ ou la molette pour ajuster",
+  "timer.done.title": "Temps écoulé",
+  "timer.done.focus": "Session de concentration terminée",
+  "timer.done.break": "La pause est finie",
+  "timer.next.started": "Maintenant : {phase}",
+  "timer.next.ready": "Ensuite : {phase}, lancez-la quand vous voulez",
 
   // Enregistrement du raccourci
   "hotkey.prompt": "Appuyez sur un raccourci",
@@ -202,6 +228,30 @@ export const fr: Record<MessageKey, string> = {
 
   // Accents rapides
   "accent.barLabel": "Caractères accentués",
+  "nav.timer": "Minuteur",
+  "timerSettings.title": "Minuteur",
+  "timerSettings.description":
+    "Un minuteur ou un Pomodoro qui continue de tourner encoche fermée, et s'y affiche.",
+  "timerSettings.widget": "Widget",
+  "timerSettings.enable": "Activer le Minuteur",
+  "timerSettings.enable.description": "Ajoute l'onglet Minuteur (Ctrl+3 dans l'encoche).",
+  "timerSettings.inNotch": "Dans l'encoche",
+  "timerSettings.live": "Afficher le minuteur en cours",
+  "timerSettings.live.description":
+    "L'encoche repliée affiche le temps restant et sa lumière se remplit à mesure que le temps passe. Si de la musique joue aussi, l'une des deux passe dans une petite bulle à côté de l'encoche.",
+  "timerSettings.notify": "Notification à la fin",
+  "timerSettings.notify.description": "Une notification Windows, avec son son, quand un minuteur ou une phase du Pomodoro se termine.",
+  "timerSettings.pomodoro": "Pomodoro",
+  "timerSettings.focus": "Concentration",
+  "timerSettings.shortBreak": "Pause courte",
+  "timerSettings.longBreak": "Pause longue",
+  "timerSettings.rounds": "Sessions avant une pause longue",
+  "timerSettings.autoContinue": "Enchaîner les phases",
+  "timerSettings.autoContinue.description": "La pause, puis la session suivante, démarrent toutes seules. Désactivé, chacune vous attend.",
+  "timerSettings.minutes": "min",
+  "timerSettings.decrease": "Moins",
+  "timerSettings.increase": "Plus",
+
   "nav.quickAccent": "Accents rapides",
   "quickAccent.title": "Accents rapides",
   "quickAccent.description":

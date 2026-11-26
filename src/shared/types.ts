@@ -102,6 +102,20 @@ export interface AccentBarState {
   index: number;
 }
 
+export interface TimerSettings {
+  enabled: boolean;
+  /** The running timer in the folded notch. */
+  showInNotch: boolean;
+  /** Windows notification when a period ends. */
+  notify: boolean;
+  focusMinutes: number;
+  shortBreakMinutes: number;
+  longBreakMinutes: number;
+  roundsBeforeLongBreak: number;
+  /** The next Pomodoro phase starts by itself. */
+  autoContinue: boolean;
+}
+
 export type LanguagePreference = "system" | "en" | "fr";
 
 export interface AppSettings {
@@ -114,6 +128,7 @@ export interface AppSettings {
   spotlight: SpotlightSettings;
   music: MusicSettings;
   quickAccent: QuickAccentSettings;
+  timer: TimerSettings;
 }
 
 export interface AppStatus {
@@ -161,7 +176,42 @@ export type PlaybackRequest =
   | { type: "previous" }
   | { type: "seek"; positionMs: number };
 
-export type WidgetTab = "search" | "music";
+export type WidgetTab = "search" | "music" | "timer";
+
+export type TimerMode = "countdown" | "pomodoro";
+export type PomodoroPhase = "focus" | "shortBreak" | "longBreak";
+export type TimerStatus = "idle" | "running" | "paused";
+
+/** Mirrors timer/machine.rs. While running, time left is derived from `endsAtMs`. */
+export interface TimerSnapshot {
+  mode: TimerMode;
+  status: TimerStatus;
+  phase: PomodoroPhase | null;
+  durationMs: number;
+  remainingMs: number;
+  /** Unix time (ms) at which the period ends, while running. */
+  endsAtMs: number | null;
+  completedFocus: number;
+  rounds: number;
+  updatedAtMs: number;
+}
+
+/** A period came to its end (timer/machine.rs). */
+export interface TimerFinished {
+  mode: TimerMode;
+  phase: PomodoroPhase | null;
+  nextPhase: PomodoroPhase | null;
+  continued: boolean;
+}
+
+export type TimerRequest =
+  | { type: "startCountdown"; durationMs: number }
+  | { type: "startPomodoro" }
+  | { type: "pause" }
+  | { type: "resume" }
+  | { type: "reset" }
+  | { type: "addTime"; deltaMs: number }
+  | { type: "skip" };
 
 /** In-app update progress, mirrored from updates.rs. */
 export type UpdateState =
@@ -177,8 +227,12 @@ export interface NotchSnapshot {
   isOpen: boolean;
 }
 
+/** Where the pointer rested: the notch, or the bubble of a second activity beside it. */
+export type HoverZone = "notch" | "bubble";
+
 export interface NotchOpenedPayload {
   source: OpenSource;
+  zone?: HoverZone;
   /** Screen behind the notch (Acrylic material), as a PNG data URL. */
   backdrop?: string | null;
 }

@@ -23,6 +23,7 @@ mod settings;
 mod settings_sync;
 mod settings_window;
 mod status;
+mod timer;
 mod tray;
 mod updates;
 mod usage;
@@ -41,6 +42,7 @@ use crate::notch::NotchController;
 use crate::quick_accent::QuickAccentService;
 use crate::search::SearchService;
 use crate::settings::SettingsStore;
+use crate::timer::TimerService;
 use crate::updates::UpdateService;
 use crate::usage::UsageStore;
 
@@ -95,6 +97,9 @@ pub fn run() {
             commands::update_check,
             commands::update_install,
             commands::quick_accent_preview,
+            commands::timer_state,
+            commands::timer_command,
+            commands::notch_set_layout,
             commands::settings_window_ready,
             commands::get_settings,
             commands::update_settings,
@@ -130,6 +135,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     app.manage(AudioVisualizer::default());
     app.manage(UpdateService::default());
     app.manage(QuickAccentService::default());
+    app.manage(TimerService::default());
 
     tray::create(app)?;
     notch::initialize(app)?;
@@ -139,6 +145,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     media::start_watcher(app);
     audio::start(app);
     updates::spawn_periodic_check(app);
+    timer::start_watcher(app);
     log::info!("L8 Toolkit {} ready", app.package_info().version);
     Ok(())
 }

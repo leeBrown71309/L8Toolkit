@@ -31,17 +31,27 @@ Widgets:
   of the notch; move with the same keys (`Shift+Space` goes back, `Esc` cancels) and release the
   letter to type the chosen one, in any app. 29 languages plus currencies and symbols, chosen in
   Settings › Quick Accent (`src-tauri/src/quick_accent/`).
+- **Timer**: a countdown (presets, `↑` `↓` or the mouse wheel to adjust) or a Pomodoro (focus,
+  short and long breaks, set in Settings › Timer). It keeps running with the notch closed: the
+  folded notch shows the time left and its light fills as time passes; a Windows notification
+  and a short peek announce the end (`src-tauri/src/timer/`).
+
+When music plays and a timer runs at the same time, the activity you looked at last takes the
+notch and the other one moves to a small bubble beside it, with its progress as a ring. Resting the
+pointer on the bubble opens the panel on that activity.
 
 While a fullscreen app (a game, a video) has the focus, the search shortcut is released to it and
 Quick Accent lets every key through, so playing never opens the notch by accident (Settings ›
 General › Games and fullscreen, `src-tauri/src/fullscreen_pause.rs`).
 
-Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` / `Ctrl+2`.
+Switch widgets with the tabs, `Alt+←` / `Alt+→`, or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`.
 The interface is available in English and French (Settings > General > Language; "System" follows
 Windows). Strings live in `src/i18n/messages/` (web) and `src-tauri/src/i18n/` (Rust); both
 catalogs are type-checked so a missing translation does not compile. Hovering a notch that is playing opens Music;
 the keyboard shortcut opens Search. In Music: `Space` play/pause, `←` `→` seek, `Ctrl+←` `Ctrl+→`
-previous/next, click the cover or the app name to bring the player to the front.
+previous/next, click the cover or the app name to bring the player to the front. In Timer: `Space`
+or `Enter` start/pause, `↑` `↓` adjust (or add/remove a minute while running), `Delete` stops,
+`Ctrl+→` skips to the next Pomodoro phase.
 
 ## Install
 
@@ -146,6 +156,7 @@ src-tauri/src/            Rust core
   media.rs                now playing: session watcher, change detection, playback commands
   audio/                  audio bars: loopback capture loop, FFT band levels (spectrum.rs)
   quick_accent/           Quick Accent: keyboard hook logic (machine.rs), accents per language
+  timer/                  timer and Pomodoro: pure logic (machine.rs), deadline watcher, notification
   updates.rs              in-app updates: periodic check, notification, signed install
   appearance.rs           window theme for the light/dark setting
   indexer.rs              background (re)indexing every 15 minutes
@@ -155,6 +166,7 @@ src/                      React UI (one bundle, two windows)
   widgets/notch/          the morphing notch shape, widget tabs, open/close/peek logic
   widgets/spotlight/      the search panel, result actions and action menu
   widgets/music/          live activity, music panel, progress bar, cover glow color
+  widgets/timer/          timer panel, timer live activity and bubble
   settings/               settings window
   shared/                 typed IPC layer, browser preview backend
 ```

@@ -435,6 +435,83 @@
     transform 320ms var(--ease-drawer) 40ms;
 }
 
+/*
+ * A second activity (music and a timer at once): a small black bubble beside
+ * the notch, Dynamic-Island style, with its progress as a ring. It splits off
+ * the notch's right edge and folds back into it.
+ * Keep its geometry in sync with BUBBLE_GAP / BUBBLE_SIZE in notch.rs.
+ */
+.notch-bubble {
+  position: absolute;
+  top: 0;
+  left: calc(50% + var(--notch-w) / 2 + 8px);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--bezel-black);
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.1);
+  pointer-events: none;
+  transform-origin: -8px 50%;
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateX(-16px) scale(0.55);
+  transition:
+    opacity 160ms var(--ease-out),
+    filter 160ms var(--ease-out),
+    transform 220ms var(--ease-out);
+}
+
+.notch-bubble[data-visible="true"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+  transition:
+    opacity 260ms var(--ease-out) 60ms,
+    filter 260ms var(--ease-out) 60ms,
+    transform 460ms var(--ease-liquid);
+}
+
+.notch-bubble__ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.notch-bubble__track,
+.notch-bubble__fill {
+  fill: none;
+  stroke-width: 2px;
+}
+
+.notch-bubble__track {
+  stroke: color-mix(in srgb, var(--bubble-color, var(--accent)) 22%, transparent);
+}
+
+.notch-bubble__fill {
+  stroke: var(--bubble-color, var(--accent));
+  stroke-linecap: round;
+  transition: stroke-dashoffset 520ms linear;
+}
+
+.notch-bubble[data-playing="false"] .notch-bubble__fill {
+  opacity: 0.5;
+}
+
+.notch-bubble__content {
+  display: grid;
+  place-items: center;
+  animation: notch-bubble-swap 280ms var(--ease-out);
+}
+
+@keyframes notch-bubble-swap {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
 /* The music light steps aside while accents are picked. As specific as the
    live rules above (and later), so it wins whether music plays or not. */
 .notch-canvas[data-mode="accent"][data-live][data-playing] .notch-live-ring,
@@ -454,6 +531,13 @@
   .notch-canvas[data-live="true"][data-playing="true"] .notch-live-ring__comet,
   .notch-canvas[data-live="true"][data-playing="true"]:not([data-mode="open"]) .notch-spill {
     animation: none;
+  }
+
+  .notch-bubble,
+  .notch-bubble[data-visible="true"] {
+    filter: none;
+    transform: none;
+    transition: opacity 150ms ease;
   }
 
   .notch-content,

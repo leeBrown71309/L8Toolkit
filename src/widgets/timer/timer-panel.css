@@ -1,0 +1,329 @@
+/*
+ * The Timer tab. Same frame as Music (a 92px visual on the left, details on
+ * the right) so switching tabs keeps the eye in place. --timer-color is the
+ * accent for focus and countdowns, a calm green for breaks.
+ */
+.timer {
+  padding: 2px 0 14px;
+  outline: none;
+}
+
+.timer__layout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 6px 20px 0 16px;
+}
+
+/* ---------- Dial ---------- */
+
+.timer__dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  color: var(--timer-color);
+}
+
+.timer__dial-ring {
+  position: absolute;
+  inset: 0;
+  /* The ring starts at 12 o'clock. */
+  transform: rotate(-90deg);
+}
+
+.timer__dial-track,
+.timer__dial-fill {
+  fill: none;
+  stroke-width: 5px;
+}
+
+.timer__dial-track {
+  stroke: color-mix(in srgb, var(--timer-color) 16%, var(--fill-3));
+}
+
+.timer__dial-fill {
+  stroke: currentColor;
+  stroke-linecap: round;
+  /* Matches the 250 ms clock tick: the ring glides between readings. */
+  transition:
+    stroke-dashoffset 260ms linear,
+    stroke 300ms ease;
+}
+
+.timer[data-state="idle"] .timer__dial-fill {
+  transition: stroke 300ms ease;
+}
+
+.timer[data-state="paused"] .timer__dial-fill {
+  opacity: 0.55;
+}
+
+.timer__dial-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--timer-color) 12%, transparent);
+  animation: timer-icon-in 260ms var(--ease-out);
+}
+
+/* ---------- Details ---------- */
+
+.timer__details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.timer__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.timer__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--timer-color);
+}
+
+.timer__badge {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--fill-2);
+}
+
+/* Countdown / Pomodoro: a small segmented control with a sliding pill. */
+.timer__modes {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--fill-2);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+}
+
+.timer__modes-indicator {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  border-radius: 999px;
+  background: var(--fill-4);
+  box-shadow:
+    inset 0 1px 0 var(--highlight),
+    0 1px 3px var(--well-shade);
+  transition: transform 260ms var(--ease-drawer);
+}
+
+.timer__modes[data-value="pomodoro"] .timer__modes-indicator {
+  transform: translateX(100%);
+}
+
+.timer__mode {
+  position: relative;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  transition: color 150ms ease;
+}
+
+.timer__mode[aria-checked="true"] {
+  color: var(--text-1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .timer__mode[aria-checked="false"]:hover {
+    color: var(--text-2);
+  }
+}
+
+.timer__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 2px;
+}
+
+.timer__digits {
+  font-family: var(--font-mono);
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-1);
+  transition: color 200ms ease;
+}
+
+.timer[data-state="paused"] .timer__digits {
+  color: var(--text-3);
+}
+
+.timer__controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer__primary {
+  color: var(--ink-1);
+  background: var(--timer-color);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .timer .timer__primary:not(:disabled):hover {
+    background: var(--timer-color);
+    filter: brightness(1.08);
+  }
+}
+
+.timer__add {
+  gap: 0;
+  grid-auto-flow: column;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer__start {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  background: var(--timer-color);
+  box-shadow: 0 6px 16px -8px var(--timer-color);
+  transition:
+    transform 140ms var(--ease-out),
+    filter 150ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .timer__start:hover {
+    filter: brightness(1.08);
+  }
+}
+
+.timer__start:active {
+  transform: scale(0.96);
+}
+
+.timer__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.timer__preset {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  background: var(--fill-1);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease,
+    transform 140ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .timer__preset:hover {
+    color: var(--text-1);
+    background: var(--fill-3);
+  }
+}
+
+.timer__preset:active {
+  transform: scale(0.95);
+}
+
+.timer__preset[data-selected="true"] {
+  color: var(--timer-color);
+  background: color-mix(in srgb, var(--timer-color) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--timer-color) 40%, transparent);
+}
+
+.timer__plan {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+
+.timer__rounds {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.timer__round {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--fill-4);
+  transition:
+    background-color 300ms ease,
+    transform 300ms var(--ease-out);
+}
+
+.timer__round[data-filled="true"] {
+  background: var(--accent);
+}
+
+.timer__round[data-current="true"] {
+  background: color-mix(in srgb, var(--accent) 45%, var(--fill-4));
+  transform: scale(1.15);
+}
+
+.timer__rounds-text {
+  margin-left: 6px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+@keyframes timer-icon-in {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer__dial-icon {
+    animation: none;
+  }
+
+  .timer__modes-indicator,
+  .timer__start,
+  .timer__preset {
+    transition: none;
+  }
+}

@@ -5,7 +5,7 @@ Guidance for Claude Code when working in this repository.
 ## Project
 
 L8 Toolkit: a Windows tray app hosting small widgets in a virtual notch at the top of the screen
-(Search and Music today; macOS and Linux later). Tauri 2 (Rust) + React 19 / TypeScript / Vite,
+(Search, Music, Quick Accent and Timer today; macOS and Linux later). Tauri 2 (Rust) + React 19 / TypeScript / Vite,
 Bun as package manager. Public repository: https://github.com/leeBrown71309/L8Toolkit (MIT).
 
 The maintainer reads French: answer in French. Code, comments, commits and docs stay in English.

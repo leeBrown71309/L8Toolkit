@@ -34,6 +34,23 @@ export interface NotchLiveActivity {
   readProgress: () => number | null;
 }
 
+/** A second activity, shown in a small bubble beside the folded notch. */
+export interface NotchBubble {
+  /** Changes when another activity takes the bubble. */
+  id: string;
+  content: ReactNode;
+  /** Ring color; the accent when null. */
+  color: string | null;
+  playing: boolean;
+  /** From 0 to 1, or null when unknown. */
+  readProgress: () => number | null;
+}
+
+const BUBBLE_SIZE = 30;
+const BUBBLE_STROKE = 2;
+const BUBBLE_RADIUS = (BUBBLE_SIZE - BUBBLE_STROKE) / 2;
+const BUBBLE_CIRCUMFERENCE = 2 * Math.PI * BUBBLE_RADIUS;
+
 /**
  * Writes the playback progress into `--media-progress` twice a second. The
  * property is registered and transitions linearly, so the light glides
@@ -63,12 +80,56 @@ function useProgressLight(canvasRef: React.RefObject<HTMLDivElement | null>, liv
   }, [canvasRef, playing, readProgress]);
 }
 
+/** The bubble's ring, written directly (no re-render) twice a second. */
+function useBubbleRing(ringRef: React.RefObject<SVGCircleElement | null>, bubble: NotchBubble | null): void {
+  const readProgress = bubble?.readProgress;
+  const playing = Boolean(bubble?.playing);
+  useEffect(() => {
+    const ring = ringRef.current;
+    if (!ring || !readProgress) return;
+    const update = () => {
+      const progress = readProgress() ?? 1;
+      ring.style.strokeDashoffset = String(BUBBLE_CIRCUMFERENCE * (1 - progress));
+    };
+    update();
+    if (!playing) return;
+    const timer = window.setInterval(update, PROGRESS_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [ringRef, readProgress, playing]);
+}
+
+function Bubble({ bubble, visible }: { bubble: NotchBubble | null; visible: boolean }) {
+  const ringRef = useRef<SVGCircleElement>(null);
+  useBubbleRing(ringRef, bubble);
+  const style = bubble?.color ? ({ "--bubble-color": bubble.color } as CSSProperties) : undefined;
+  return (
+    <div className="notch-bubble" data-visible={visible && bubble !== null} data-playing={Boolean(bubble?.playing)} style={style} aria-hidden="true">
+      <svg className="notch-bubble__ring" width={BUBBLE_SIZE} height={BUBBLE_SIZE} viewBox={`0 0 ${BUBBLE_SIZE} ${BUBBLE_SIZE}`}>
+        <circle className="notch-bubble__track" cx={BUBBLE_SIZE / 2} cy={BUBBLE_SIZE / 2} r={BUBBLE_RADIUS} />
+        <circle
+          ref={ringRef}
+          className="notch-bubble__fill"
+          cx={BUBBLE_SIZE / 2}
+          cy={BUBBLE_SIZE / 2}
+          r={BUBBLE_RADIUS}
+          strokeDasharray={BUBBLE_CIRCUMFERENCE}
+        />
+      </svg>
+      <span key={bubble?.id} className="notch-bubble__content">
+        {bubble?.content}
+      </span>
+    </div>
+  );
+}
+
 interface NotchShapeProps {
   mode: NotchMode;
   /** Height of the open panel content, in CSS pixels. */
   openHeight: number;
   backdrop: NotchBackdrop | null;
   live: NotchLiveActivity | null;
+  /** A second activity beside the folded notch. */
+  bubble: NotchBubble | null;
   /** Drawn over the idle notch (Quick Accent), with the width it needs. */
   overlay: { content: ReactNode; width: number } | null;
   children: ReactNode;
@@ -97,6 +158,7 @@ export function NotchShape({
   openHeight,
   backdrop,
   live,
+  bubble,
   overlay,
   children,
   onBackdropPointerDown,
@@ -105,6 +167,9 @@ export function NotchShape({
 }: NotchShapeProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   useProgressLight(canvasRef, live);
+  // Kept after it ends so the bubble can fold back into the notch.
+  const lastBubbleRef = useRef<NotchBubble | null>(null);
+  if (bubble) lastBubbleRef.current = bubble;
   const style = {
     "--notch-open-h": `${openHeight}px`,
     ...(live?.glow ? { "--media-glow": live.glow } : {}),
@@ -132,6 +197,7 @@ export function NotchShape({
       <div className="notch-shoulder notch-shoulder--left" aria-hidden="true" />
       <div className="notch-shoulder notch-shoulder--right" aria-hidden="true" />
       <div className="notch-rim" aria-hidden="true" />
+      <Bubble bubble={bubble ?? lastBubbleRef.current} visible={bubble !== null && (mode === "idle" || mode === "peek")} />
       <div className="notch-live-ring" aria-hidden="true">
         <span className="notch-live-ring__track" />
         <span className="notch-live-ring__fill" />
