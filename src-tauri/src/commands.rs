@@ -186,11 +186,6 @@ pub fn notch_set_layout(controller: State<'_, NotchController>, bubble: bool) {
     controller.set_bubble(bubble);
 }
 
-/// Something is dragged onto the notch: open it on Recents to receive it.
-#[tauri::command]
-pub fn notch_open_for_drop(app: AppHandle) {
-    notch::open(&app, notch::OpenSource::Drop);
-}
 
 #[tauri::command]
 pub fn recents_list(recents: State<'_, RecentsService>) -> Vec<RecentView> {
@@ -226,8 +221,3 @@ pub fn recents_clear(app: AppHandle) {
     recents::clear(&app);
 }
 
-/// Files dropped on the notch (the shelf).
-#[tauri::command]
-pub fn recents_add_files(app: AppHandle, paths: Vec<String>) {
-    recents::add_files(&app, paths);
-}

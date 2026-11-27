@@ -8,6 +8,7 @@ import type {
   Material,
   NotchOpenedPayload,
   NowPlaying,
+  FileDragEvent,
   OpenSource,
   RecentView,
   TimerFinished,
@@ -140,8 +141,6 @@ export function NotchApp() {
   const [shot, setShot] = useState<RecentView | null>(null);
   /** Files are being dragged over the notch. */
   const [dropActive, setDropActive] = useState(false);
-  /** An item is being dragged out of Recents: its own drag-enter is not a drop. */
-  const ownDragRef = useRef(false);
   const glow = useArtworkGlow(media?.artwork ?? null, Boolean(music?.artworkTint));
   const wallpaper = useWallpaper(appearance?.material === "mica", session.id);
   const backdrop = resolveBackdrop(appearance?.material, wallpaper, snapshot);
@@ -257,46 +256,23 @@ export function NotchApp() {
     }, SCREENSHOT_PEEK_MS);
   });
 
-  // Files dragged onto the notch: it opens on Recents and takes them (the shelf).
+  // Files dragged onto the notch: Rust opens it on Recents and keeps the
+  // dropped ones (the shelf); the panel shows its drop zone meanwhile.
   const dropLeaveTimerRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (!recentsEnabled) return;
-    let unlisten: (() => void) | undefined;
-    let disposed = false;
-    backend
-      .onFileDrag((event) => {
-        if (ownDragRef.current) {
-          if (event.type === "drop" || event.type === "leave") ownDragRef.current = false;
-          return;
-        }
-        window.clearTimeout(dropLeaveTimerRef.current);
-        if (event.type === "enter") {
-          setDropActive(true);
-          setTab("recents");
-          if (modeRef.current !== "open") {
-            backend.notchOpenForDrop().catch((error: unknown) => console.error("Cannot open the notch for a drop", error));
-          }
-        } else if (event.type === "drop") {
-          setDropActive(false);
-          backend.recentsAddFiles(event.paths).catch((error: unknown) => console.error("Cannot keep the dropped files", error));
-        } else if (event.type === "leave") {
-          setDropActive(false);
-          if (sessionRef.current.source === "drop" && !engagedRef.current) {
-            dropLeaveTimerRef.current = window.setTimeout(() => close(true), DROP_LEAVE_CLOSE_DELAY_MS);
-          }
-        }
-      })
-      .then((stop) => {
-        if (disposed) stop();
-        else unlisten = stop;
-      })
-      .catch((error: unknown) => console.error("Cannot listen to file drags", error));
-    return () => {
-      disposed = true;
-      unlisten?.();
-      window.clearTimeout(dropLeaveTimerRef.current);
-    };
-  }, [recentsEnabled, close]);
+  useBackendEvent<FileDragEvent>(BACKEND_EVENTS.fileDrag, (event) => {
+    window.clearTimeout(dropLeaveTimerRef.current);
+    if (event.type === "enter") {
+      setDropActive(true);
+      setTab("recents");
+      return;
+    }
+    setDropActive(false);
+    // Passing over the notch without dropping closes what the drag opened.
+    if (event.type === "leave" && sessionRef.current.source === "drop" && !engagedRef.current) {
+      dropLeaveTimerRef.current = window.setTimeout(() => close(true), DROP_LEAVE_CLOSE_DELAY_MS);
+    }
+  });
+  useEffect(() => () => window.clearTimeout(dropLeaveTimerRef.current), []);
 
   // A period ended: the notch peeks with the news (the timer takes the notch).
   useBackendEvent<TimerFinished>(BACKEND_EVENTS.timerFinished, (finished) => {
@@ -566,9 +542,6 @@ export function NotchApp() {
                 dropActive={dropActive}
                 onClose={close}
                 onEngaged={markEngaged}
-                onDragOut={() => {
-                  ownDragRef.current = true;
-                }}
               />
             </div>
           )}

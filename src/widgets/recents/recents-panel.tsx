@@ -34,15 +34,13 @@ interface RecentsPanelProps {
   dropActive: boolean;
   onClose: (restoreFocus: boolean) => void;
   onEngaged: () => void;
-  /** An item is being dragged out of the notch (its own drops are ignored). */
-  onDragOut: () => void;
 }
 
 /**
  * The Recents tab: what was copied, captured or dropped on the notch lately.
  * Click copies an item again, dragging it drops it into any app.
  */
-export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged, onDragOut }: RecentsPanelProps) {
+export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged }: RecentsPanelProps) {
   const { t } = useI18n();
   const rootRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
@@ -106,13 +104,7 @@ export function RecentsPanel({ items, isActive, dropActive, onClose, onEngaged, 
   const copy = useCallback((id: string) => run(backend.recentsCopy(id), () => setCopiedId(id)), [run]);
   const open = useCallback((id: string) => run(backend.recentsOpen(id)), [run]);
   const remove = useCallback((id: string) => run(backend.recentsRemove(id)), [run]);
-  const startDrag = useCallback(
-    (id: string) => {
-      onDragOut();
-      run(backend.recentsDrag(id));
-    },
-    [onDragOut, run],
-  );
+  const startDrag = useCallback((id: string) => run(backend.recentsDrag(id)), [run]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     onEngaged();

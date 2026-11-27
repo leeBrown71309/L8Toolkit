@@ -18,6 +18,8 @@ import type {
  * Trigger events from the console: `window.l8Preview.emit("notch:opened", { source: "hotkey" })`.
  * Accent bar: `window.l8Preview.emit("accent:state", { visible: true, characters: ["é", "è", "ê", "ë"], index: 1 })`.
  * Screenshot peek: `window.l8Preview.recents.screenshot()`.
+ * Shelf drop: `window.l8Preview.emit("notch:file-drag", { type: "enter" })`, then
+ * `window.l8Preview.recents.addFiles(["C:\\Docs\\Plan.pdf"])` and `emit("notch:file-drag", { type: "drop" })`.
  * Timer: `window.l8Preview.timer.apply({ type: "startCountdown", durationMs: 60000 })` (`?timerSpeed=40` runs it faster).
  */
 
@@ -299,15 +301,12 @@ export function createPreviewBackend(): Backend {
     timerState: async () => timer.snapshot(),
     timerCommand: async (request) => timer.apply(request),
     notchSetLayout: async () => undefined,
-    notchOpenForDrop: async () => emit("notch:opened", { source: "drop" }),
     recentsList: async () => recents.list(),
     recentsCopy: async (id) => recents.copy(id),
     recentsOpen: async (id) => console.info("[preview] open recent", id),
     recentsDrag: async (id) => console.info("[preview] drag recent", id),
     recentsRemove: async (id) => recents.remove(id),
     recentsClear: async () => recents.clear(),
-    recentsAddFiles: async (paths) => recents.addFiles(paths),
-    onFileDrag: async () => () => undefined,
     getSettings: async () => snapshot,
     updateSettings: async (settings) => {
       snapshot = { ...snapshot, settings };

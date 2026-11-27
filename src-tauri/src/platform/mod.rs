@@ -82,6 +82,19 @@ pub struct ClipboardChange {
 
 pub type ClipboardHandler = Box<dyn Fn(ClipboardChange) + Send + 'static>;
 
+/// A drag of files over the notch's drop zone.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DropZoneEvent {
+    /// Files came over the zone.
+    Enter,
+    /// They left without being dropped (or the drag was cancelled).
+    Leave,
+    /// They were dropped: their paths.
+    Drop(Vec<String>),
+}
+
+pub type DropZoneHandler = Box<dyn Fn(DropZoneEvent) + Send + 'static>;
+
 /// Keys reported by the system keyboard hook (only those features react to).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {

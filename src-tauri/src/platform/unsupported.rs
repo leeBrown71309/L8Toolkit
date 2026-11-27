@@ -151,6 +151,16 @@ pub fn unprotect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
     unsupported()
 }
 
+pub fn start_drop_zone(_handler: DropZoneHandler) -> Result<(), String> {
+    Err(UNSUPPORTED.to_string())
+}
+
+pub fn show_drop_zone(_x: i32, _y: i32, _width: i32, _height: i32) {}
+
+pub fn raise_drop_zone() {}
+
+pub fn hide_drop_zone() {}
+
 pub fn left_button_down() -> bool {
     false
 }

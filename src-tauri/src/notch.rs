@@ -19,7 +19,8 @@ use tauri::{AppHandle, Emitter, LogicalSize, Manager, Monitor, PhysicalPosition,
 use crate::backdrop;
 use crate::fullscreen_pause;
 use crate::media::MediaService;
-use crate::platform;
+use crate::platform::{self, DropZoneEvent};
+use crate::recents;
 use crate::settings::{Material, SettingsStore};
 use crate::timer::TimerService;
 
@@ -41,6 +42,13 @@ const HOVER_DWELL_TICKS: u32 = 3;
 const FULLSCREEN_CHECK_EVERY_TICKS: u32 = 10;
 /// Lets the collapse animation finish before the window moves or hides.
 const COLLAPSE_SETTLE_DELAY: Duration = Duration::from_millis(320);
+/// The drop zone stays ~300 ms after the button is released: the drop is
+/// delivered to it after the release.
+const DROP_ZONE_LINGER_TICKS: u32 = 6;
+/// How often the drop zone is put back above the notch window while shown.
+const DROP_ZONE_RAISE_EVERY_TICKS: u32 = 4;
+/// Tells the web layer that files are dragged over the notch (enter, leave, drop).
+pub const FILE_DRAG_EVENT: &str = "notch:file-drag";
 
 pub mod events {
     pub const OPENED: &str = "notch:opened";
@@ -151,6 +159,7 @@ pub fn initialize(app: &AppHandle) -> Result<(), String> {
     window.set_ignore_cursor_events(true).map_err(|error| error.to_string())?;
     sync_idle_visibility(app);
     start_pointer_watch(app.clone());
+    start_drop_zone(app);
     Ok(())
 }
 
@@ -386,6 +395,11 @@ fn is_primary(app: &AppHandle, monitor: &Monitor) -> bool {
         .is_some_and(|primary| primary.position() == monitor.position())
 }
 
+/// True when the pointer is anywhere on the notch window (the open panel).
+pub fn is_in_window(placement: &Placement, x: i32, y: i32) -> bool {
+    x >= placement.x && x < placement.x + placement.width && y >= placement.y && y < placement.y + placement.height
+}
+
 /// True when the pointer is on the idle notch (plus a small forgiving margin).
 pub fn is_in_hover_zone(placement: &Placement, x: i32, y: i32) -> bool {
     let center = placement.x + placement.width / 2;
@@ -420,24 +434,23 @@ fn start_pointer_watch(app: AppHandle) {
             if tick.is_multiple_of(FULLSCREEN_CHECK_EVERY_TICKS) {
                 refresh_fullscreen_state(&app, &controller, &placement);
             }
-            let hover_allowed = app.state::<SettingsStore>().read(|settings| settings.spotlight.hover_to_open)
-                && idle_notch_wanted(&app);
             let idle = !controller.is_open.load(Ordering::SeqCst);
             let unobstructed = !controller.fullscreen_app_active.load(Ordering::SeqCst);
-            if !(hover_allowed && idle && unobstructed) {
-                dwell_ticks = 0;
-                drop_target.disarm(&app, idle);
-                continue;
-            }
-
+            let notch_shown = idle_notch_wanted(&app);
+            let (hover_to_open, shelf_enabled) =
+                app.state::<SettingsStore>().read(|settings| (settings.spotlight.hover_to_open, settings.recents.enabled));
             let cursor = platform::cursor_position();
             let button_down = platform::left_button_down();
-            let on_notch = cursor.is_some_and(|(x, y)| is_in_hover_zone(&placement, x, y));
-            let shelf_enabled = app.state::<SettingsStore>().read(|settings| settings.recents.enabled);
-            drop_target.update(&app, shelf_enabled && button_down, on_notch);
-            // A held button is a drag (a file, a window): the drop target
+
+            // Files can be dropped on the folded notch and on the open one.
+            let drop_allowed = shelf_enabled && unobstructed && (notch_shown || !idle);
+            let in_drop_zone = drop_allowed
+                && cursor.is_some_and(|(x, y)| if idle { is_in_hover_zone(&placement, x, y) } else { is_in_window(&placement, x, y) });
+            drop_target.update(button_down, in_drop_zone, &placement);
+
+            // A held button is a drag (a file, a window): the drop zone
             // handles it, resting on the notch must not open it.
-            if button_down {
+            if !(hover_to_open && notch_shown && idle && unobstructed) || button_down {
                 dwell_ticks = 0;
                 continue;
             }
@@ -467,55 +480,95 @@ fn start_pointer_watch(app: AppHandle) {
     }
 }
 
-/// Lets files be dropped on the idle notch (the Recents shelf).
+/// Lets files be dropped on the notch (the Recents shelf).
 ///
-/// The idle window ignores the mouse, so Windows would never offer it a drop.
-/// When the button went down elsewhere and the pointer then reaches the notch
-/// with the button still held (a drag in progress), the window starts taking
-/// the mouse; if what is dragged is a file, the web layer gets a drag-enter
-/// and opens the notch. A plain click on the notch never arms it, so clicks
-/// keep reaching the window below.
+/// WebView2 refuses file drops, so a native drop window (see
+/// `platform::start_drop_zone`) is laid over the notch window when a drag
+/// comes in: the button went down elsewhere and the pointer reached the
+/// notch with it still held. A press on the notch itself (dragging a Recents
+/// card out, a click) never shows it. It stays a moment after the release so
+/// the drop is delivered, then goes away.
 #[derive(Default)]
 struct DropTarget {
-    /// The button went down outside the notch and is still held.
+    /// The button went down outside the drop zone and is still held.
     dragging_in: bool,
-    armed: bool,
     was_down: bool,
+    shown: bool,
+    shown_ticks: u32,
+    released_ticks: u32,
 }
 
 impl DropTarget {
-    fn update(&mut self, app: &AppHandle, button_down: bool, on_notch: bool) {
+    fn update(&mut self, button_down: bool, in_zone: bool, placement: &Placement) {
         if button_down && !self.was_down {
-            self.dragging_in = !on_notch;
+            self.dragging_in = !in_zone;
         }
         self.was_down = button_down;
-        let wanted = button_down && self.dragging_in && on_notch;
-        if wanted && !self.armed {
-            self.armed = true;
-            set_mouse_through(app, false);
-        } else if !wanted && self.armed && !button_down {
-            self.disarm(app, true);
+        if button_down {
+            self.released_ticks = 0;
+            if !self.shown && self.dragging_in && in_zone {
+                self.shown = true;
+                self.shown_ticks = 0;
+                log::debug!("A drag reached the notch: drop zone shown");
+                platform::show_drop_zone(placement.x, placement.y, placement.width, placement.height);
+            } else if self.shown {
+                // The notch window rises when it opens: stay above it.
+                self.shown_ticks += 1;
+                if self.shown_ticks.is_multiple_of(DROP_ZONE_RAISE_EVERY_TICKS) {
+                    platform::raise_drop_zone();
+                }
+            }
+            return;
         }
-        if !button_down {
-            self.dragging_in = false;
-        }
-    }
-
-    /// Back to click-through, unless the notch opened meanwhile (it owns the mouse then).
-    fn disarm(&mut self, app: &AppHandle, idle: bool) {
-        if self.armed {
-            self.armed = false;
-            if idle {
-                set_mouse_through(app, true);
+        self.dragging_in = false;
+        if self.shown {
+            self.released_ticks += 1;
+            if self.released_ticks >= DROP_ZONE_LINGER_TICKS {
+                self.shown = false;
+                log::debug!("Drag over: drop zone hidden");
+                platform::hide_drop_zone();
             }
         }
     }
 }
 
-fn set_mouse_through(app: &AppHandle, through: bool) {
-    if let Some(window) = notch_window(app) {
-        log_failure("update the notch mouse handling", window.set_ignore_cursor_events(through));
+/// Starts the native drop window and routes its drags: files coming in open
+/// the notch on Recents, dropped files are kept there.
+fn start_drop_zone(app: &AppHandle) {
+    let handle = app.clone();
+    let started = platform::start_drop_zone(Box::new(move |event| on_drop_zone(&handle, event)));
+    if let Err(error) = started {
+        log::warn!("{error}");
     }
+}
+
+fn on_drop_zone(app: &AppHandle, event: DropZoneEvent) {
+    let state = match event {
+        DropZoneEvent::Enter => {
+            if !app.state::<NotchController>().is_open.load(Ordering::SeqCst) {
+                open(app, OpenSource::Drop);
+            }
+            platform::raise_drop_zone();
+            FileDragState::Enter
+        }
+        DropZoneEvent::Leave => FileDragState::Leave,
+        DropZoneEvent::Drop(paths) => {
+            recents::add_files(app, paths);
+            FileDragState::Drop
+        }
+    };
+    if let Err(error) = app.emit(FILE_DRAG_EVENT, state) {
+        log::warn!("Cannot report the file drag: {error}");
+    }
+}
+
+/// What the web layer is told about a file drag over the notch.
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+enum FileDragState {
+    Enter,
+    Leave,
+    Drop,
 }
 
 /// Steps the idle notch aside while a fullscreen app (game, video) covers

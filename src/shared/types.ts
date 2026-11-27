@@ -219,7 +219,8 @@ export interface RecentView {
 }
 
 /** Files dragged over the notch window (Tauri drag and drop). */
-export type FileDragEvent = { type: "enter"; paths: string[] } | { type: "over" } | { type: "drop"; paths: string[] } | { type: "leave" };
+/** Files dragged over the notch (Rust keeps the dropped ones itself). */
+export type FileDragEvent = { type: "enter" | "leave" | "drop" };
 
 export type TimerMode = "countdown" | "pomodoro";
 export type PomodoroPhase = "focus" | "shortBreak" | "longBreak";

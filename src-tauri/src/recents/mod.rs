@@ -363,8 +363,11 @@ fn image_origin(screenshot_app: bool) -> RecentOrigin {
 
 /// Files dropped on the notch (the shelf).
 pub fn add_files(app: &AppHandle, paths: Vec<String>) {
+    let dropped = paths.len();
     let paths: Vec<String> = paths.into_iter().filter(|path| Path::new(path).exists()).collect();
+    log::debug!("Recents: {dropped} item(s) dropped on the notch, {} existing file(s) kept", paths.len());
     if paths.is_empty() {
+        log::warn!("Recents: nothing to keep from the drop ({dropped} path(s), none found on disk)");
         return;
     }
     let service = app.state::<RecentsService>();
