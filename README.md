@@ -38,12 +38,13 @@ Widgets:
 
 - **Recents**: the last texts, images, screenshots and files copied (10 by default, kept across
   restarts), plus files dropped on the notch (a shelf: drag a file onto the notch, switch windows,
-  drag it out later). Click an item to copy it again, drag it into any app, or open it. A new
-  screenshot briefly shows in the notch. Copies from password managers (Bitwarden, 1Password,
+  drag it out later). Click an item to copy it again, drag it into any app, or open it. Files with a
+  Windows thumbnail (photos, videos) show it on their card. A new screenshot briefly shows in the notch. Copies from password managers (Bitwarden, 1Password,
   KeePass...) are kept but never shown in clear, and are encrypted with DPAPI on disk; a setting
   leaves them out entirely (`src-tauri/src/recents/`). Browser extensions copy through the browser,
   which marks nothing, so texts that look like a password, an API key or a token are masked too
-  (`recents/secret.rs`).
+  (`recents/secret.rs`). WebView2 refuses file drops, so the shelf uses a native drop window laid over
+  the notch while a drag comes in (`platform/win32/drop_zone.rs`).
 
 When music plays and a timer runs at the same time, the activity you looked at last takes the
 notch and the other one moves to a small bubble beside it, with its progress as a ring. Resting the
@@ -151,7 +152,7 @@ materials itself. See `src-tauri/src/backdrop.rs`.
 ```
 src-tauri/src/            Rust core
   lib.rs                  app setup, plugins, command registration
-  notch.rs                notch window: placement, open/collapse, hover + fullscreen watcher
+  notch.rs                notch window: placement, open/collapse, hover, drop zone, fullscreen watcher
   hotkey.rs               global shortcut registration
   fullscreen_pause.rs     releases the shortcut and Quick Accent to fullscreen apps (games)
   search/                 pure search logic (no Tauri types, unit tested)
