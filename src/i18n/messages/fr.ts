@@ -287,9 +287,9 @@ export const fr: Record<MessageKey, string> = {
   "recentsSettings.screenshotPeek": "Afficher les nouvelles captures",
   "recentsSettings.screenshotPeek.description": "L'encoche montre un instant la capture que vous venez de faire.",
   "recentsSettings.privacy": "Confidentialité",
-  "recentsSettings.passwordManagers": "Garder les copies des gestionnaires de mots de passe",
+  "recentsSettings.passwordManagers": "Garder les mots de passe et clés copiés",
   "recentsSettings.passwordManagers.description":
-    "Depuis Bitwarden, 1Password, KeePass… Jamais affichées en clair, chiffrées pour votre compte Windows sur le disque. À noter : ces gestionnaires vident le presse-papiers après un délai ; Récents garde la copie jusqu'à ce qu'elle soit poussée dehors ou retirée.",
+    "Les copies de Bitwarden, 1Password, KeePass (app ou extension de navigateur), et tout texte qui ressemble à un mot de passe, une clé d'API ou un jeton. Jamais affichés en clair, chiffrés pour votre compte Windows sur le disque. À noter : ces gestionnaires vident le presse-papiers après un délai ; Récents garde la copie jusqu'à ce qu'elle soit poussée dehors ou retirée.",
   "recentsSettings.clear": "Effacer Récents",
   "recentsSettings.clear.description": "Retire tous les éléments et les images enregistrées.",
   "recentsSettings.clear.button": "Tout effacer",

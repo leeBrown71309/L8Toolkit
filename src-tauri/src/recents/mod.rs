@@ -4,14 +4,17 @@
 //!
 //! - `list`: the list logic (pure, tested).
 //! - `image`: clipboard image formats and thumbnails (pure, tested).
+//! - `secret`: spots texts that look like passwords or keys (pure, tested).
 //! - this module: the clipboard listener, the files on disk, the commands.
 //!
 //! Stored in the app data folder: `recents/recents.json` and `recents/images/`.
-//! Texts copied from a password manager are encrypted for the Windows user
-//! (DPAPI) before being written, and never sent to the web layer in clear.
+//! Sensitive texts (copied from a password manager, or looking like a password
+//! or a key) are encrypted for the Windows user (DPAPI) before being written,
+//! and never sent to the web layer in clear.
 
 mod image;
 mod list;
+mod secret;
 
 use std::collections::HashMap;
 use std::fs;
@@ -88,26 +91,36 @@ pub struct RecentsService {
 
 impl RecentsService {
     /// Reads the saved list; sensitive texts are decrypted, items whose image
-    /// went missing are dropped.
+    /// went missing are dropped. Texts saved in clear that look like secrets
+    /// (kept by an earlier version) are marked sensitive and saved encrypted.
     pub fn load(directory: PathBuf) -> Self {
         let stored: Vec<RecentItem> = json_file::read_or_default(&directory.join(STORE_FILE));
         let images = directory.join(IMAGES_FOLDER);
+        let mut newly_masked = false;
         let items = stored
             .into_iter()
             .filter_map(|mut item| {
                 if let Some(protected) = item.protected_text.take() {
                     item.text = Some(reveal(&protected).map_err(|error| log::warn!("Recents: {error}")).ok()?);
                 }
+                if !item.sensitive && item.text.as_deref().is_some_and(secret::looks_like_secret) {
+                    item.sensitive = true;
+                    newly_masked = true;
+                }
                 let image_present = item.image.as_ref().is_none_or(|image| images.join(&image.file).exists());
                 image_present.then_some(item)
             })
             .collect();
-        RecentsService {
+        let service = RecentsService {
             directory,
             list: Mutex::new(RecentList::new(items)),
             thumbnails: Mutex::new(HashMap::new()),
             counter: AtomicU64::new(0),
+        };
+        if newly_masked {
+            service.save(&service.lock());
         }
+        service
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, RecentList> {
@@ -242,6 +255,10 @@ impl RecentsService {
 
 /// Starts listening to the clipboard.
 pub fn start(app: &AppHandle) {
+    // Secrets found while loading must not stay when the user keeps none.
+    if !settings(app).keep_password_manager_items {
+        app.state::<RecentsService>().update(|list| list.remove_where(|item| item.sensitive));
+    }
     let handle = app.clone();
     if let Err(error) = platform::watch_clipboard(Box::new(move |change| on_clipboard(&handle, change))) {
         log::warn!("Recents is unavailable: {error}");
@@ -254,7 +271,14 @@ fn settings(app: &AppHandle) -> RecentsSettings {
 
 fn on_clipboard(app: &AppHandle, change: ClipboardChange) {
     let settings = settings(app);
-    if !settings.enabled || (change.sensitive && !settings.keep_password_manager_items) {
+    // A browser extension (Bitwarden in Vivaldi…) copies through the browser,
+    // which marks nothing: the text itself must then reveal the secret.
+    let sensitive = change.sensitive
+        || match &change.content {
+            ClipboardContent::Text(text) => secret::looks_like_secret(text),
+            _ => false,
+        };
+    if !settings.enabled || (sensitive && !settings.keep_password_manager_items) {
         return;
     }
     let service = app.state::<RecentsService>();
@@ -319,7 +343,7 @@ fn on_clipboard(app: &AppHandle, change: ClipboardChange) {
         protected_text: None,
         files,
         image,
-        sensitive: change.sensitive,
+        sensitive,
         source_app: change.source_app,
         fingerprint: print,
     };

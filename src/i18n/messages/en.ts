@@ -283,9 +283,9 @@ export const en = {
   "recentsSettings.screenshotPeek": "Show new screenshots",
   "recentsSettings.screenshotPeek.description": "The notch briefly shows the capture you just took.",
   "recentsSettings.privacy": "Privacy",
-  "recentsSettings.passwordManagers": "Keep copies from password managers",
+  "recentsSettings.passwordManagers": "Keep copied passwords and keys",
   "recentsSettings.passwordManagers.description":
-    "From Bitwarden, 1Password, KeePass… Never shown in clear, encrypted for your Windows account on disk. Note: password managers clear the clipboard after a while; Recents keeps the copy until it is pushed out or removed.",
+    "Copies from Bitwarden, 1Password, KeePass (app or browser extension), and any text that looks like a password, an API key or a token. Never shown in clear, encrypted for your Windows account on disk. Note: password managers clear the clipboard after a while; Recents keeps the copy until it is pushed out or removed.",
   "recentsSettings.clear": "Clear Recents",
   "recentsSettings.clear.description": "Removes every item and the saved images.",
   "recentsSettings.clear.button": "Clear all",

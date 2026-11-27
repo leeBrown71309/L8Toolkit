@@ -41,7 +41,9 @@ Widgets:
   drag it out later). Click an item to copy it again, drag it into any app, or open it. A new
   screenshot briefly shows in the notch. Copies from password managers (Bitwarden, 1Password,
   KeePass...) are kept but never shown in clear, and are encrypted with DPAPI on disk; a setting
-  leaves them out entirely (`src-tauri/src/recents/`).
+  leaves them out entirely (`src-tauri/src/recents/`). Browser extensions copy through the browser,
+  which marks nothing, so texts that look like a password, an API key or a token are masked too
+  (`recents/secret.rs`).
 
 When music plays and a timer runs at the same time, the activity you looked at last takes the
 notch and the other one moves to a small bubble beside it, with its progress as a ring. Resting the
