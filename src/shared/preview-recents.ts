@@ -44,6 +44,14 @@ export function createPreviewRecents(emit: (event: string, payload: unknown) => 
       sourceApp: "WindowsTerminal",
     }),
     item({
+      id: "photo",
+      kind: "files",
+      origin: "shelf",
+      createdAtMs: now - 4 * MINUTE_MS,
+      thumbnail: sampleThumbnail("#0ea5e9", "#a855f7"),
+      files: [{ path: "C:\\Users\\Preview\\Pictures\\Vacances 2026.jpg", name: "Vacances 2026.jpg", exists: true }],
+    }),
+    item({
       id: "invoice",
       kind: "files",
       createdAtMs: now - 6 * MINUTE_MS,

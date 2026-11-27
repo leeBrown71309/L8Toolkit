@@ -131,8 +131,8 @@
   color: var(--text-3);
 }
 
-/* Images fill the card; the meta line floats on a shade at the bottom. */
-.recent-card[data-kind="image"] .recent-card__body {
+/* Images and file thumbnails fill the card; the meta line floats on a shade at the bottom. */
+.recent-card[data-preview="true"] .recent-card__body {
   position: absolute;
   inset: 0;
 }
@@ -144,7 +144,7 @@
   pointer-events: none;
 }
 
-.recent-card[data-kind="image"]::after {
+.recent-card[data-preview="true"]::after {
   content: "";
   position: absolute;
   inset: auto 0 0;
@@ -249,7 +249,7 @@
   color: var(--text-3);
 }
 
-.recent-card[data-kind="image"] .recent-card__meta {
+.recent-card[data-preview="true"] .recent-card__meta {
   margin-top: auto;
   color: rgb(255 255 255 / 0.82);
 }

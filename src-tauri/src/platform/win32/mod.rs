@@ -24,7 +24,7 @@ pub use clipboard::{
 pub use com::enter_com;
 pub use drop_zone::{hide_drop_zone, raise_drop_zone, show_drop_zone, start_drop_zone};
 pub use file_actions::{copy_files_to_clipboard, move_to_recycle_bin, open_in_terminal, open_with_dialog, show_properties};
-pub use icons::{extract_icon_rgba, extract_thumbnail_rgba};
+pub use icons::{extract_file_preview_rgba, extract_icon_rgba, extract_thumbnail_rgba};
 pub use input::send_paste_shortcut;
 pub use keyboard::{
     caps_lock_on, install_keyboard_hook, pressed_modifiers, type_replacing, KeyHandler, KeyboardHook,

@@ -206,6 +206,9 @@ function RecentCard({ item, selected, copied, onCopy, onOpen, onRemove, onDragSt
   const press = useRef<{ x: number; y: number; dragged: boolean } | null>(null);
   const age = relativeAge(item.createdAtMs);
   const missing = item.kind === "files" && item.files.every((file) => !file.exists);
+  // Images, and files Windows has a thumbnail for, fill the whole card.
+  const filePreview = item.kind === "files" && !missing && Boolean(item.thumbnail);
+  const preview = item.kind === "image" || filePreview;
 
   // Pressing and moving a few pixels hands the item to a Windows drag, so it
   // can be dropped into any app; a press without movement is a click (copy).
@@ -237,6 +240,7 @@ function RecentCard({ item, selected, copied, onCopy, onOpen, onRemove, onDragSt
       aria-label={label}
       title={t("recents.cardHint")}
       data-kind={item.kind}
+      data-preview={preview}
       data-missing={missing}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -251,7 +255,11 @@ function RecentCard({ item, selected, copied, onCopy, onOpen, onRemove, onDragSt
       <div className="recent-card__meta">
         <OriginIcon item={item} />
         <span className="recent-card__meta-text">
-          {item.sensitive && item.sourceApp ? item.sourceApp : t(age.key, { count: String(age.count) })}
+          {item.sensitive && item.sourceApp
+            ? item.sourceApp
+            : filePreview
+              ? filesLabel(item)
+              : t(age.key, { count: String(age.count) })}
         </span>
       </div>
       <div className="recent-card__actions">
@@ -279,6 +287,13 @@ function cardLabel(item: RecentView, t: ReturnType<typeof useI18n>["t"]): string
   return item.files.map((file) => file.name).join(", ");
 }
 
+/** "Photo.jpg", or "Photo.jpg +2" for several files. */
+function filesLabel(item: RecentView): string {
+  const extra = item.files.length - 1;
+  const name = item.files[0]?.name ?? "";
+  return extra > 0 ? `${name} +${extra}` : name;
+}
+
 function CardContent({ item }: { item: RecentView }) {
   const { t } = useI18n();
   if (item.kind === "image") {
@@ -288,7 +303,13 @@ function CardContent({ item }: { item: RecentView }) {
       <Camera size={24} />
     );
   }
-  if (item.kind === "files") return <FilesContent item={item} />;
+  if (item.kind === "files") {
+    return item.thumbnail && item.files.some((file) => file.exists) ? (
+      <img className="recent-card__image" src={item.thumbnail} alt="" draggable={false} />
+    ) : (
+      <FilesContent item={item} />
+    );
+  }
   if (item.sensitive) {
     return (
       <div className="recent-card__secret">

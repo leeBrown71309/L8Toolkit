@@ -173,6 +173,10 @@ pub fn send_paste_shortcut() -> Result<(), String> {
     unsupported()
 }
 
+pub fn extract_file_preview_rgba(_path: &str, _size: i32) -> Result<(Vec<u8>, u32, u32), String> {
+    Err(UNSUPPORTED.to_string())
+}
+
 pub fn extract_thumbnail_rgba(_path: &str, _size: i32) -> Result<(Vec<u8>, u32, u32), String> {
     unsupported()
 }

@@ -43,6 +43,8 @@ pub const RECENTS_SCREENSHOT_EVENT: &str = "recents:screenshot";
 const STORE_FILE: &str = "recents.json";
 const IMAGES_FOLDER: &str = "images";
 const THUMBNAIL_EDGE: u32 = 360;
+/// Thumbnails of copied or dropped files: enough for a card, quick to render.
+const FILE_PREVIEW_EDGE: i32 = 256;
 /// Enough text for three lines of preview; the full text stays in Rust.
 const PREVIEW_CHARS: usize = 400;
 /// How long the notch stays up to show a new screenshot (the web layer peeks 4 s).
@@ -65,7 +67,8 @@ pub struct RecentView {
     pub preview: Option<String>,
     pub text_length: usize,
     pub files: Vec<RecentFile>,
-    /// Small PNG data URL for images.
+    /// Small PNG data URL: the image, or the first file's thumbnail when
+    /// Windows has one (photos, videos, some documents).
     pub thumbnail: Option<String>,
     pub image_size: Option<[u32; 2]>,
     pub sensitive: bool,
@@ -86,6 +89,8 @@ pub struct RecentsService {
     directory: PathBuf,
     list: Mutex<RecentList>,
     thumbnails: Mutex<HashMap<String, String>>,
+    /// File thumbnails by path and modification time; `None`: Windows has none.
+    file_previews: Mutex<HashMap<String, Option<String>>>,
     counter: AtomicU64,
 }
 
@@ -115,6 +120,7 @@ impl RecentsService {
             directory,
             list: Mutex::new(RecentList::new(items)),
             thumbnails: Mutex::new(HashMap::new()),
+            file_previews: Mutex::new(HashMap::new()),
             counter: AtomicU64::new(0),
         };
         if newly_masked {
@@ -159,7 +165,10 @@ impl RecentsService {
                     exists: Path::new(path).exists(),
                 })
                 .collect(),
-            thumbnail: item.image.as_ref().and_then(|image| self.thumbnail_url(&image.thumbnail)),
+            thumbnail: match &item.image {
+                Some(image) => self.thumbnail_url(&image.thumbnail),
+                None => item.files.first().and_then(|path| self.file_preview(path)),
+            },
             image_size: item.image.as_ref().map(|image| [image.width, image.height]),
             sensitive: item.sensitive,
             source_app: item.source_app.as_deref().map(readable_app_name),
@@ -175,6 +184,26 @@ impl RecentsService {
         let url = format!("data:image/png;base64,{}", STANDARD.encode(bytes));
         cache.insert(file.to_string(), url.clone());
         Some(url)
+    }
+
+    /// The thumbnail Windows renders for a file, as a PNG data URL, cached
+    /// until the file changes. `None` for files with only an icon.
+    fn file_preview(&self, path: &str) -> Option<String> {
+        let modified = fs::metadata(path).and_then(|metadata| metadata.modified()).ok()?;
+        let since_epoch = modified.duration_since(UNIX_EPOCH).map_or(0, |duration| duration.as_millis());
+        let key = format!("{path}|{since_epoch}");
+        let mut cache = self.file_previews.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if let Some(cached) = cache.get(&key) {
+            return cached.clone();
+        }
+        let _apartment = platform::enter_com();
+        let preview = platform::extract_file_preview_rgba(path, FILE_PREVIEW_EDGE)
+            .and_then(|(pixels, width, height)| encode_png(&pixels, width, height))
+            .map(|png| format!("data:image/png;base64,{}", STANDARD.encode(png)))
+            .map_err(|error| log::debug!("Recents: no preview for a file: {error}"))
+            .ok();
+        cache.insert(key, preview.clone());
+        preview
     }
 
     /// Writes the list; sensitive texts are encrypted first.
