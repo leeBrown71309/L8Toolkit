@@ -58,5 +58,19 @@ pub fn text(text: Text) -> &'static str {
         Text::UpdateBusy => "Une recherche de mise à jour est déjà en cours",
         Text::UpdateNotificationTitle => "L8 Toolkit {version} est disponible",
         Text::UpdateNotificationBody => "Installez-la en un clic depuis Paramètres › Mises à jour, ou depuis l'icône de la zone de notification.",
+
+        Text::TimerDoneTitle => "Temps écoulé",
+        Text::TimerDoneBody => "Votre minuteur est terminé.",
+        Text::PomodoroFocusDoneTitle => "Session de concentration terminée",
+        Text::PomodoroBreakDoneTitle => "La pause est finie",
+        Text::PomodoroFocusStarted => "On s'y remet : {minutes} minutes de concentration ont commencé.",
+        Text::PomodoroFocusReady => "Lancez la prochaine session de {minutes} minutes depuis l'encoche.",
+        Text::PomodoroBreakStarted => "Faites une pause de {minutes} minutes, elle a commencé.",
+        Text::PomodoroBreakReady => "Lancez votre pause de {minutes} minutes depuis l'encoche.",
+
+        Text::RecentsScreenshotName => "Capture d'écran",
+        Text::RecentsImageName => "Image",
+        Text::ErrorRecentGone => "Cet élément n'est plus disponible",
+        Text::ErrorRecentFilesMissing => "Ces fichiers ont été déplacés ou supprimés",
     }
 }

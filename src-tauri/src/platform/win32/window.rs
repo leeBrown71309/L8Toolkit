@@ -76,6 +76,18 @@ pub fn force_foreground(handle: isize) {
     }
 }
 
+/// The primary mouse button is held right now (a drag may be under way).
+pub fn left_button_down() -> bool {
+    use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON, VK_RBUTTON};
+    use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_SWAPBUTTON};
+    // SAFETY: plain input state queries.
+    unsafe {
+        // Left-handed setups swap the buttons: the primary one is then the right.
+        let primary = if GetSystemMetrics(SM_SWAPBUTTON) != 0 { VK_RBUTTON } else { VK_LBUTTON };
+        GetAsyncKeyState(i32::from(primary.0)) < 0
+    }
+}
+
 pub fn cursor_position() -> Option<(i32, i32)> {
     let mut point = POINT::default();
     // SAFETY: writes into a local POINT.

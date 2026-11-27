@@ -58,5 +58,19 @@ pub fn text(text: Text) -> &'static str {
         Text::UpdateBusy => "An update check is already running",
         Text::UpdateNotificationTitle => "L8 Toolkit {version} is available",
         Text::UpdateNotificationBody => "Install it in one click from Settings › Updates, or from the tray icon.",
+
+        Text::TimerDoneTitle => "Time's up",
+        Text::TimerDoneBody => "Your timer has finished.",
+        Text::PomodoroFocusDoneTitle => "Focus session complete",
+        Text::PomodoroBreakDoneTitle => "Break is over",
+        Text::PomodoroFocusStarted => "Back to work: {minutes} minutes of focus have started.",
+        Text::PomodoroFocusReady => "Start the next {minutes}-minute focus session from the notch.",
+        Text::PomodoroBreakStarted => "Take a {minutes}-minute break, it has started.",
+        Text::PomodoroBreakReady => "Start your {minutes}-minute break from the notch.",
+
+        Text::RecentsScreenshotName => "Screenshot",
+        Text::RecentsImageName => "Image",
+        Text::ErrorRecentGone => "This item is no longer available",
+        Text::ErrorRecentFilesMissing => "These files were moved or deleted",
     }
 }

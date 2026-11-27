@@ -115,6 +115,20 @@ texts! {
     UpdateBusy,
     UpdateNotificationTitle,
     UpdateNotificationBody,
+
+    TimerDoneTitle,
+    TimerDoneBody,
+    PomodoroFocusDoneTitle,
+    PomodoroBreakDoneTitle,
+    PomodoroFocusStarted,
+    PomodoroFocusReady,
+    PomodoroBreakStarted,
+    PomodoroBreakReady,
+
+    RecentsScreenshotName,
+    RecentsImageName,
+    ErrorRecentGone,
+    ErrorRecentFilesMissing,
 }
 
 pub fn tr(language: Language, text: Text) -> &'static str {

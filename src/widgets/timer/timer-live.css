@@ -1,0 +1,148 @@
+/*
+ * The timer inside the black notch (fixed light colors: the notch is black
+ * in every theme). Laid out from --notch-w / --notch-h like the music
+ * activity, so it rides the morph.
+ */
+.timer-live {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--notch-w);
+  height: var(--notch-h);
+  translate: -50% 0;
+  color: var(--media-glow, var(--accent));
+  pointer-events: none;
+  transition: opacity 180ms var(--ease-out);
+}
+
+.timer-live[data-mode="open"] {
+  opacity: 0;
+  transition-duration: 160ms;
+}
+
+/* Folded: an icon on the left, the time on the right, like a phone's island. */
+.timer-live__icon,
+.timer-live__time {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  transition:
+    opacity 220ms var(--ease-out) 60ms,
+    filter 220ms var(--ease-out) 60ms;
+}
+
+.timer-live__icon {
+  left: 14px;
+  display: grid;
+}
+
+.timer-live__time {
+  right: 14px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-live[data-paused="true"] .timer-live__time {
+  opacity: 0.55;
+}
+
+.timer-live[data-mode="peek"] .timer-live__icon,
+.timer-live[data-mode="peek"] .timer-live__time {
+  opacity: 0;
+  filter: blur(3px);
+  transition-delay: 0ms;
+  transition-duration: 140ms;
+}
+
+/* A period ended: badge and message, where music shows cover and title. */
+.timer-live__alert {
+  position: absolute;
+  inset: 0;
+  animation: timer-alert-in 320ms var(--ease-out) 80ms both;
+}
+
+.timer-live__badge {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 18%, #000000);
+  translate: 0 -50%;
+  animation: timer-badge-ring 1.4s var(--ease-out) 2;
+}
+
+.timer-live__text {
+  position: absolute;
+  top: 50%;
+  left: 66px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  translate: 0 -50%;
+}
+
+.timer-live__title,
+.timer-live__subtitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.timer-live__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f3f2ef;
+}
+
+.timer-live__subtitle {
+  font-size: 12px;
+  color: rgb(243 242 239 / 0.58);
+}
+
+/* The bubble beside the notch. */
+.timer-bubble {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--bubble-color, var(--accent));
+}
+
+@keyframes timer-alert-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+/* The badge pulses twice, like a soft chime. */
+@keyframes timer-badge-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-live__alert,
+  .timer-live__badge {
+    animation: none;
+  }
+
+  .timer-live__icon,
+  .timer-live__time {
+    filter: none;
+  }
+}

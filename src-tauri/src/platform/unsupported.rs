@@ -121,12 +121,60 @@ pub fn copy_files_to_clipboard(_paths: &[String]) -> Result<(), String> {
     unsupported()
 }
 
+pub fn watch_clipboard(_handler: crate::platform::ClipboardHandler) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn write_clipboard_text(_text: &str) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn write_clipboard_image(_dib: &[u8], _png: &[u8]) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn mark_own_clipboard_write() {}
+
+pub fn start_drag_files(_paths: &[String]) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn start_drag_text(_text: &str) -> Result<(), String> {
+    unsupported()
+}
+
+pub fn protect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    unsupported()
+}
+
+pub fn unprotect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
+    unsupported()
+}
+
+pub fn start_drop_zone(_handler: DropZoneHandler) -> Result<(), String> {
+    Err(UNSUPPORTED.to_string())
+}
+
+pub fn show_drop_zone(_x: i32, _y: i32, _width: i32, _height: i32) {}
+
+pub fn raise_drop_zone() {}
+
+pub fn hide_drop_zone() {}
+
+pub fn left_button_down() -> bool {
+    false
+}
+
 pub fn open_in_terminal(_directory: &str) -> Result<(), String> {
     unsupported()
 }
 
 pub fn send_paste_shortcut() -> Result<(), String> {
     unsupported()
+}
+
+pub fn extract_file_preview_rgba(_path: &str, _size: i32) -> Result<(Vec<u8>, u32, u32), String> {
+    Err(UNSUPPORTED.to_string())
 }
 
 pub fn extract_thumbnail_rgba(_path: &str, _size: i32) -> Result<(Vec<u8>, u32, u32), String> {

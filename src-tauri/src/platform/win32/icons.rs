@@ -9,7 +9,7 @@ use windows::Win32::Graphics::Gdi::{
 };
 use windows::Win32::UI::Shell::{
     IShellItemImageFactory, SHCreateItemFromParsingName, SIIGBF, SIIGBF_BIGGERSIZEOK, SIIGBF_ICONONLY,
-    SIIGBF_RESIZETOFIT,
+    SIIGBF_RESIZETOFIT, SIIGBF_THUMBNAILONLY,
 };
 
 /// Shell icon of any parsing name (file path, folder or `shell:AppsFolder\...`
@@ -23,6 +23,14 @@ pub fn extract_icon_rgba(target: &str, size: i32) -> Result<(Vec<u8>, u32, u32),
 /// The calling thread must have entered a COM apartment.
 pub fn extract_thumbnail_rgba(path: &str, size: i32) -> Result<(Vec<u8>, u32, u32), String> {
     render_shell_image(path, size, SIIGBF_RESIZETOFIT | SIIGBF_BIGGERSIZEOK)
+}
+
+/// Real thumbnail of a file (an image, a video, a PDF with a viewer that
+/// provides previews), fitted inside `size` x `size`; an error when Windows
+/// only has an icon for it.
+/// The calling thread must have entered a COM apartment.
+pub fn extract_file_preview_rgba(path: &str, size: i32) -> Result<(Vec<u8>, u32, u32), String> {
+    render_shell_image(path, size, SIIGBF_THUMBNAILONLY | SIIGBF_RESIZETOFIT | SIIGBF_BIGGERSIZEOK)
 }
 
 fn render_shell_image(target: &str, size: i32, flags: SIIGBF) -> Result<(Vec<u8>, u32, u32), String> {

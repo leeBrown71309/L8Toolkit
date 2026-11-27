@@ -39,3 +39,12 @@ export function NowPlayingLive({ media, mode, showAudioBars }: NowPlayingLivePro
     </div>
   );
 }
+
+/** The music in the small bubble beside the notch: a round cover. */
+export function MusicBubbleContent({ media }: { media: NowPlaying }) {
+  return (
+    <span className="music-bubble" data-playing={media.playing}>
+      <CoverArt src={media.artwork} iconSize={10} />
+    </span>
+  );
+}

@@ -59,6 +59,42 @@ pub enum MediaCommand {
     Seek { position_ms: u64 },
 }
 
+/// What the clipboard held after a change (Recents).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ClipboardContent {
+    Text(String),
+    /// Files copied in Explorer (paths).
+    Files(Vec<String>),
+    /// An image in the "PNG" clipboard format (Snipping Tool, browsers).
+    Png(Vec<u8>),
+    /// An image as a device-independent bitmap (CF_DIB).
+    Dib(Vec<u8>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ClipboardChange {
+    pub content: ClipboardContent,
+    /// Copied by a password manager, or tagged by the app as not for history.
+    pub sensitive: bool,
+    /// Executable of the app that copied, lowercase ("bitwarden.exe").
+    pub source_app: Option<String>,
+}
+
+pub type ClipboardHandler = Box<dyn Fn(ClipboardChange) + Send + 'static>;
+
+/// A drag of files over the notch's drop zone.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DropZoneEvent {
+    /// Files came over the zone.
+    Enter,
+    /// They left without being dropped (or the drag was cancelled).
+    Leave,
+    /// They were dropped: their paths.
+    Drop(Vec<String>),
+}
+
+pub type DropZoneHandler = Box<dyn Fn(DropZoneEvent) + Send + 'static>;
+
 /// Keys reported by the system keyboard hook (only those features react to).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {

@@ -6,6 +6,7 @@ use tauri::{AppHandle, Manager, State};
 use crate::actions::{self, ActionOutcome, ExecuteAction};
 use crate::audio::{self, AudioVisualizer};
 use crate::quick_accent::{self, AccentLanguage, AccentPreviewRow};
+use crate::recents::{self, RecentView, RecentsService};
 use crate::icons::IconService;
 use crate::i18n::{tr, Text};
 use crate::indexer;
@@ -17,6 +18,7 @@ use crate::search::{SearchResult, SearchSection, SearchService};
 use crate::settings::{AppSettings, SettingsStore};
 use crate::settings_sync::{self, SettingsSnapshot};
 use crate::settings_window;
+use crate::timer::{self, TimerRequest, TimerService, TimerSnapshot};
 use crate::updates::{self, UpdateService, UpdateState};
 use crate::usage::UsageStore;
 
@@ -165,3 +167,57 @@ pub fn settings_window_ready(app: AppHandle) {
 pub fn quick_accent_preview(languages: Vec<AccentLanguage>) -> Vec<AccentPreviewRow> {
     quick_accent::preview(&languages)
 }
+
+#[tauri::command]
+pub fn timer_state(timer: State<'_, TimerService>) -> TimerSnapshot {
+    timer.snapshot()
+}
+
+/// Start, pause, resume, reset, add time or skip (Timer tab).
+#[tauri::command]
+pub fn timer_command(app: AppHandle, request: TimerRequest) -> TimerSnapshot {
+    timer::apply(&app, request)
+}
+
+/// The folded notch shows a second activity in a bubble beside it: the
+/// pointer resting on that bubble opens the panel on it.
+#[tauri::command]
+pub fn notch_set_layout(controller: State<'_, NotchController>, bubble: bool) {
+    controller.set_bubble(bubble);
+}
+
+
+#[tauri::command]
+pub fn recents_list(recents: State<'_, RecentsService>) -> Vec<RecentView> {
+    recents.views()
+}
+
+/// Puts an item back on the clipboard.
+#[tauri::command]
+pub async fn recents_copy(app: AppHandle, id: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || recents::copy(&app, &id))
+        .await
+        .map_err(|error| format!("Copy task failed: {error}"))?
+}
+
+#[tauri::command]
+pub fn recents_open(app: AppHandle, id: String) -> Result<(), String> {
+    recents::open(&app, &id)
+}
+
+/// Drags an item into another app (called while the mouse button is held).
+#[tauri::command]
+pub fn recents_drag(app: AppHandle, id: String) -> Result<(), String> {
+    recents::drag(&app, &id)
+}
+
+#[tauri::command]
+pub fn recents_remove(app: AppHandle, id: String) {
+    recents::remove(&app, &id);
+}
+
+#[tauri::command]
+pub fn recents_clear(app: AppHandle) {
+    recents::clear(&app);
+}
+

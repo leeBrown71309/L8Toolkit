@@ -8,7 +8,10 @@ import type {
   Material,
   NotchOpenedPayload,
   NowPlaying,
+  FileDragEvent,
   OpenSource,
+  RecentView,
+  TimerFinished,
   WidgetTab,
 } from "../../shared/types";
 import { useBackendEvent } from "../../shared/use-backend-event";
@@ -16,10 +19,18 @@ import { useElementHeight } from "../../shared/use-element-height";
 import { AccentBar, accentBarWidth } from "../accent/accent-bar";
 import { useArtworkGlow } from "../music/artwork-glow";
 import { MusicPanel } from "../music/music-panel";
-import { NowPlayingLive } from "../music/now-playing-live";
+import { MusicBubbleContent, NowPlayingLive } from "../music/now-playing-live";
 import { currentPositionMs, useNowPlaying } from "../music/use-now-playing";
+import { RecentsPanel } from "../recents/recents-panel";
+import { ScreenshotLive } from "../recents/screenshot-live";
+import { useRecents } from "../recents/use-recents";
 import { SpotlightPanel } from "../spotlight/spotlight-panel";
-import { NotchShape, type NotchBackdrop, type NotchLiveActivity, type NotchMode } from "./notch-shape";
+import { TimerBubbleContent, TimerLive } from "../timer/timer-live";
+import { TimerPanel } from "../timer/timer-panel";
+import { useTimer } from "../timer/timer-state";
+import { elapsedRatio, isTimerActive, timerColor } from "../timer/timer-time";
+import { NotchShape, type NotchBackdrop, type NotchBubble, type NotchLiveActivity, type NotchMode } from "./notch-shape";
+import { TAB_ORDER, tabForKeyCode } from "./tab-shortcuts";
 import { WidgetHeader } from "./widget-header";
 
 /** Focus can flicker while Windows hands it over right after opening. */
@@ -35,8 +46,15 @@ const STARTUP_QUIET_MS = 6000;
 /** Notch window is 540px tall; keep room for the drop shadow. */
 const MAX_PANEL_HEIGHT = 500;
 const INITIAL_PANEL_HEIGHT = 180;
-const TAB_ORDER: WidgetTab[] = ["search", "music"];
-const TAB_SHORTCUTS: Record<string, WidgetTab> = { "1": "search", "2": "music" };
+/** How long the notch shows that a timer period ended. */
+const TIMER_ALERT_MS = 5000;
+/** How long a new screenshot is shown in the notch. */
+const SCREENSHOT_PEEK_MS = 4000;
+/** A notch opened by a file drag closes this long after the drag leaves without a drop. */
+const DROP_LEAVE_CLOSE_DELAY_MS = 250;
+
+/** What can live in the folded notch. With two at once, one takes the bubble. */
+type Activity = "music" | "timer";
 
 interface PendingPeek {
   track: string;
@@ -74,6 +92,11 @@ function resolveBackdrop(material: Material | undefined, wallpaper: string | nul
   return null;
 }
 
+/** No position to show: the whole edge lights up (a screenshot flash). */
+function readNoProgress(): number | null {
+  return null;
+}
+
 /** Track identity, to notice when the song (or video) changes. */
 function trackKey(media: NowPlaying | null): string | null {
   return media ? `${media.sourceName}|${media.title}|${media.artist}` : null;
@@ -102,21 +125,55 @@ export function NotchApp() {
   const music = settings?.settings.music;
   const searchEnabled = settings?.settings.spotlight.enabled ?? true;
   const musicEnabled = music?.enabled ?? false;
+  const timerSettings = settings?.settings.timer;
+  const timerEnabled = timerSettings?.enabled ?? false;
+  const recentsSettings = settings?.settings.recents;
+  const recentsEnabled = recentsSettings?.enabled ?? false;
   useApplyAppearance(appearance, settings?.systemAccentColor ?? null);
 
   const media = useNowPlaying(musicEnabled);
+  const timer = useTimer(timerEnabled);
+  /** The activity the user turned to last: it gets the notch, the other the bubble. */
+  const [primary, setPrimary] = useState<Activity>("music");
+  const [timerAlert, setTimerAlert] = useState<TimerFinished | null>(null);
+  const recents = useRecents(recentsEnabled);
+  /** A screenshot just taken, shown in the notch for a few seconds. */
+  const [shot, setShot] = useState<RecentView | null>(null);
+  /** Files are being dragged over the notch. */
+  const [dropActive, setDropActive] = useState(false);
   const glow = useArtworkGlow(media?.artwork ?? null, Boolean(music?.artworkTint));
   const wallpaper = useWallpaper(appearance?.material === "mica", session.id);
   const backdrop = resolveBackdrop(appearance?.material, wallpaper, snapshot);
-  const tabs = useMemo(
-    () => TAB_ORDER.filter((candidate) => (candidate === "search" ? searchEnabled : musicEnabled)),
-    [searchEnabled, musicEnabled],
-  );
+  const tabs = useMemo(() => {
+    const enabled: Record<WidgetTab, boolean> = {
+      search: searchEnabled,
+      music: musicEnabled,
+      timer: timerEnabled,
+      recents: recentsEnabled,
+    };
+    return TAB_ORDER.filter((candidate) => enabled[candidate]);
+  }, [searchEnabled, musicEnabled, timerEnabled, recentsEnabled]);
+
+  // Which activity takes the notch, which one the bubble beside it.
+  const timerActive = isTimerActive(timer);
+  const musicShown = Boolean(media && music?.showInNotch);
+  const timerShown = Boolean(timerSettings?.showInNotch && (timerActive || timerAlert));
+  const activities: Activity[] = [];
+  if (musicShown) activities.push("music");
+  if (timerShown) activities.push("timer");
+  const mainActivity: Activity | null =
+    timerAlert && timerShown ? "timer" : activities.includes(primary) ? primary : (activities[0] ?? null);
+  const bubbleActivity: Activity | null = activities.find((activity) => activity !== mainActivity) ?? null;
   const activeTab = tabs.includes(tab) ? tab : (tabs[0] ?? "search");
 
   const modeRef = useRef<NotchMode>("idle");
   const sessionRef = useRef(session);
   const mediaRef = useRef(media);
+  const timerRef = useRef(timer);
+  const timerAlertRef = useRef(timerAlert);
+  const timerSettingsRef = useRef(timerSettings);
+  const mainActivityRef = useRef(mainActivity);
+  const bubbleActivityRef = useRef(bubbleActivity);
   const tabsRef = useRef(tabs);
   const tabRef = useRef<WidgetTab>(activeTab);
   const openedAtRef = useRef(0);
@@ -127,6 +184,11 @@ export function NotchApp() {
     modeRef.current = mode;
     sessionRef.current = session;
     mediaRef.current = media;
+    timerRef.current = timer;
+    timerAlertRef.current = timerAlert;
+    timerSettingsRef.current = timerSettings;
+    mainActivityRef.current = mainActivity;
+    bubbleActivityRef.current = bubbleActivity;
     tabsRef.current = tabs;
     tabRef.current = activeTab;
   });
@@ -148,16 +210,24 @@ export function NotchApp() {
   }, []);
 
   const handleOpened = useCallback(
-    ({ source, backdrop: screenBehind }: NotchOpenedPayload) => {
+    ({ source, zone, backdrop: screenBehind }: NotchOpenedPayload) => {
       engagedRef.current = false;
       openedAtRef.current = performance.now();
       setSnapshot(screenBehind ?? null);
       setSession((previous) => ({ id: previous.id + 1, source }));
-      // Hovering a notch that shows music means "show me the music";
+      // Hovering an activity (the notch or its bubble) means "show me that";
       // the keyboard shortcut means "search".
       const availableTabs = tabsRef.current;
-      const wantsMusic = source === "hover" && Boolean(mediaRef.current) && availableTabs.includes("music");
-      setTab(wantsMusic || !availableTabs.includes("search") ? "music" : "search");
+      const pointed: WidgetTab | null =
+        source === "drop"
+          ? "recents"
+          : source === "hover"
+            ? zone === "bubble"
+              ? bubbleActivityRef.current
+              : mainActivityRef.current
+            : null;
+      const fallback = availableTabs.includes("search") ? "search" : (availableTabs[0] ?? "search");
+      setTab(pointed && availableTabs.includes(pointed) ? pointed : fallback);
       setMode("open");
     },
     [],
@@ -175,6 +245,47 @@ export function NotchApp() {
 
   useBackendEvent<NotchOpenedPayload>(BACKEND_EVENTS.notchOpened, handleOpened);
   useBackendEvent<AccentBarState>(BACKEND_EVENTS.accentState, setAccent);
+  // A screenshot was taken: the notch peeks with its thumbnail.
+  useBackendEvent<RecentView>(BACKEND_EVENTS.recentsScreenshot, (view) => {
+    setShot(view);
+    setMode((current) => (current === "open" ? current : "peek"));
+    window.clearTimeout(peekTimerRef.current);
+    peekTimerRef.current = window.setTimeout(() => {
+      setShot(null);
+      setMode((current) => (current === "peek" ? "idle" : current));
+    }, SCREENSHOT_PEEK_MS);
+  });
+
+  // Files dragged onto the notch: Rust opens it on Recents and keeps the
+  // dropped ones (the shelf); the panel shows its drop zone meanwhile.
+  const dropLeaveTimerRef = useRef<number | undefined>(undefined);
+  useBackendEvent<FileDragEvent>(BACKEND_EVENTS.fileDrag, (event) => {
+    window.clearTimeout(dropLeaveTimerRef.current);
+    if (event.type === "enter") {
+      setDropActive(true);
+      setTab("recents");
+      return;
+    }
+    setDropActive(false);
+    // Passing over the notch without dropping closes what the drag opened.
+    if (event.type === "leave" && sessionRef.current.source === "drop" && !engagedRef.current) {
+      dropLeaveTimerRef.current = window.setTimeout(() => close(true), DROP_LEAVE_CLOSE_DELAY_MS);
+    }
+  });
+  useEffect(() => () => window.clearTimeout(dropLeaveTimerRef.current), []);
+
+  // A period ended: the notch peeks with the news (the timer takes the notch).
+  useBackendEvent<TimerFinished>(BACKEND_EVENTS.timerFinished, (finished) => {
+    if (!timerSettingsRef.current?.showInNotch) return;
+    setTimerAlert(finished);
+    setPrimary("timer");
+    setMode((current) => (current === "open" ? current : "peek"));
+    window.clearTimeout(peekTimerRef.current);
+    peekTimerRef.current = window.setTimeout(() => {
+      setTimerAlert(null);
+      setMode((current) => (current === "peek" ? "idle" : current));
+    }, TIMER_ALERT_MS);
+  });
   useBackendEvent<null>(BACKEND_EVENTS.notchClosed, () => {
     cancelLeaveTimer();
     setMode("idle");
@@ -200,14 +311,16 @@ export function NotchApp() {
   }, [close]);
 
   // Widget switching from anywhere in the panel: Alt+Left / Alt+Right cycle
-  // through the tools, Ctrl+1 / Ctrl+2 jump to one. Captured before the
+  // through the tools, Alt+1 to Alt+4 jump to one. Captured before the
   // widgets so neither the search field nor the music keys swallow it.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (modeRef.current !== "open") return;
       const available = tabsRef.current;
-      const cycle = event.altKey && !event.ctrlKey && (event.key === "ArrowLeft" || event.key === "ArrowRight");
-      const direct = event.ctrlKey && !event.altKey ? TAB_SHORTCUTS[event.key] : undefined;
+      // Ctrl+Alt is AltGr on European keyboards: it types characters.
+      const altOnly = event.altKey && !event.ctrlKey && !event.metaKey;
+      const cycle = altOnly && (event.key === "ArrowLeft" || event.key === "ArrowRight");
+      const direct = altOnly && !event.shiftKey ? tabForKeyCode(event.code) : undefined;
       let next: WidgetTab | undefined;
       if (cycle && available.length > 1) {
         const index = available.indexOf(tabRef.current);
@@ -253,6 +366,7 @@ export function NotchApp() {
     if (!fresh || !wanted || modeRef.current === "open") return;
     // Functional update: an open panel always wins over a peek.
     setMode((current) => (current === "open" ? current : "peek"));
+    setPrimary("music");
     // The timer lives in a ref, not in this effect's cleanup: pausing during
     // the peek must not cancel the fold back.
     window.clearTimeout(peekTimerRef.current);
@@ -264,6 +378,30 @@ export function NotchApp() {
 
   useEffect(() => () => window.clearTimeout(peekTimerRef.current), []);
 
+  // Starting a timer brings it to the notch; music moves to the bubble.
+  const wasTimerActiveRef = useRef(false);
+  useEffect(() => {
+    if (timerActive && !wasTimerActiveRef.current) setPrimary("timer");
+    wasTimerActiveRef.current = timerActive;
+  }, [timerActive]);
+
+  // Closing the panel on Music or Timer makes that activity the main one:
+  // the user looked at it last.
+  const previousModeRef = useRef(mode);
+  useEffect(() => {
+    const last = tabRef.current;
+    if (previousModeRef.current === "open" && mode !== "open" && (last === "music" || last === "timer")) {
+      setPrimary(last);
+    }
+    previousModeRef.current = mode;
+  }, [mode]);
+
+  // Rust needs the bubble's hover zone only while it is shown.
+  const hasBubble = bubbleActivity !== null;
+  useEffect(() => {
+    backend.notchSetLayout(hasBubble).catch((error: unknown) => console.error("Cannot update the notch layout", error));
+  }, [hasBubble]);
+
   useEffect(() => cancelLeaveTimer, [cancelLeaveTimer]);
 
   const markEngaged = useCallback(() => {
@@ -272,7 +410,8 @@ export function NotchApp() {
   }, [cancelLeaveTimer]);
 
   const handlePanelPointerLeave = useCallback(() => {
-    const isPeek = sessionRef.current.source === "hover" && !engagedRef.current;
+    const source = sessionRef.current.source;
+    const isPeek = (source === "hover" || source === "drop") && !engagedRef.current;
     if (modeRef.current !== "open" || !isPeek) return;
     cancelLeaveTimer();
     leaveTimerRef.current = window.setTimeout(() => close(true), HOVER_LEAVE_CLOSE_DELAY_MS);
@@ -290,21 +429,51 @@ export function NotchApp() {
     return currentPositionMs(current) / current.durationMs;
   }, []);
 
-  const live: NotchLiveActivity | null =
+  const readTimerProgress = useCallback(() => {
+    const current = timerRef.current;
+    // An ended countdown is no longer active: its light stays full during the alert.
+    if (!isTimerActive(current)) return timerAlertRef.current ? 1 : null;
+    return elapsedRatio(current);
+  }, []);
+
+  const liveMode = mode === "open" || mode === "accent" || accent?.visible ? "open" : mode;
+  const timerGlow = timerColor(timerAlert && !timerActive ? timerAlert.phase : (timer?.phase ?? null));
+  const musicLive: NotchLiveActivity | null =
     media && music?.showInNotch
       ? {
-          content: (
-            <NowPlayingLive
-              media={media}
-              mode={mode === "open" || mode === "accent" || accent?.visible ? "open" : mode}
-              showAudioBars={Boolean(music.showAudioBars)}
-            />
-          ),
+          content: <NowPlayingLive media={media} mode={liveMode} showAudioBars={Boolean(music.showAudioBars)} />,
           playing: media.playing,
           glow,
           readProgress,
         }
       : null;
+  const timerLive: NotchLiveActivity | null = timerShown
+    ? {
+        content: <TimerLive timer={timerActive ? timer : null} alert={timerAlert} mode={liveMode} />,
+        playing: timer?.status === "running" || Boolean(timerAlert),
+        glow: timerGlow,
+        readProgress: readTimerProgress,
+      }
+    : null;
+  const activityLive = mainActivity === "music" ? musicLive : mainActivity === "timer" ? timerLive : null;
+  // A new screenshot briefly takes over the notch; the activity comes back after.
+  const shotShown = shot !== null && Boolean(recentsSettings?.screenshotPeek);
+  const live: NotchLiveActivity | null = shotShown
+    ? { content: <ScreenshotLive shot={shot} visible={mode === "peek"} />, playing: true, glow: null, readProgress: readNoProgress }
+    : activityLive;
+
+  let bubble: NotchBubble | null = null;
+  if (bubbleActivity === "music" && media) {
+    bubble = { id: "music", content: <MusicBubbleContent media={media} />, color: glow, playing: media.playing, readProgress };
+  } else if (bubbleActivity === "timer" && timerActive) {
+    bubble = {
+      id: "timer",
+      content: <TimerBubbleContent timer={timer} />,
+      color: timerGlow,
+      playing: timer.status === "running",
+      readProgress: readTimerProgress,
+    };
+  }
 
   // The open panel always wins; otherwise an accent bar takes over the idle
   // notch (or a peek) until it closes.
@@ -324,6 +493,7 @@ export function NotchApp() {
       openHeight={Math.min(panelHeight, MAX_PANEL_HEIGHT)}
       backdrop={backdrop}
       live={live}
+      bubble={bubble}
       overlay={overlay}
       onBackdropPointerDown={() => close(true)}
       onPanelPointerEnter={cancelLeaveTimer}
@@ -334,6 +504,7 @@ export function NotchApp() {
           tabs={tabs}
           active={activeTab}
           musicPlaying={Boolean(media?.playing)}
+          timerRunning={timer?.status === "running"}
           onSelect={(next) => {
             markEngaged();
             selectTab(next);
@@ -347,6 +518,28 @@ export function NotchApp() {
                 key={session.id}
                 isOpen={mode === "open"}
                 isActive={activeTab === "search"}
+                onClose={close}
+                onEngaged={markEngaged}
+              />
+            </div>
+          )}
+          {timerEnabled && timerSettings && (
+            <div className="widget-view" hidden={activeTab !== "timer"}>
+              <TimerPanel
+                timer={timer}
+                settings={timerSettings}
+                isActive={mode === "open" && activeTab === "timer"}
+                onClose={close}
+                onEngaged={markEngaged}
+              />
+            </div>
+          )}
+          {recentsEnabled && (
+            <div className="widget-view" hidden={activeTab !== "recents"}>
+              <RecentsPanel
+                items={recents}
+                isActive={mode === "open" && activeTab === "recents"}
+                dropActive={dropActive}
                 onClose={close}
                 onEngaged={markEngaged}
               />

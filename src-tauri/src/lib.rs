@@ -18,11 +18,13 @@ mod media;
 mod notch;
 mod platform;
 mod quick_accent;
+mod recents;
 mod search;
 mod settings;
 mod settings_sync;
 mod settings_window;
 mod status;
+mod timer;
 mod tray;
 mod updates;
 mod usage;
@@ -39,13 +41,16 @@ use crate::icons::IconService;
 use crate::media::MediaService;
 use crate::notch::NotchController;
 use crate::quick_accent::QuickAccentService;
+use crate::recents::RecentsService;
 use crate::search::SearchService;
 use crate::settings::SettingsStore;
+use crate::timer::TimerService;
 use crate::updates::UpdateService;
 use crate::usage::UsageStore;
 
 const SETTINGS_FILE_NAME: &str = "settings.json";
 const USAGE_FILE_NAME: &str = "usage.json";
+const RECENTS_FOLDER_NAME: &str = "recents";
 const TOGGLE_SEARCH_ARGUMENT: &str = "--toggle-search";
 
 pub fn run() {
@@ -79,6 +84,16 @@ pub fn run() {
             setup(app.handle())?;
             Ok(())
         })
+        .on_window_event(|window, event| match event {
+            // Alt+F4 while the notch has the focus would destroy it for good
+            // (nothing recreates it): closing the notch only folds it.
+            tauri::WindowEvent::CloseRequested { api, .. } if window.label() == notch::NOTCH_WINDOW_LABEL => {
+                api.prevent_close();
+                log::debug!("Close asked for the notch window: folding it instead");
+                notch::collapse(window.app_handle(), true);
+            }
+            _ => {}
+        })
         .invoke_handler(tauri::generate_handler![
             commands::search,
             commands::frequent_items,
@@ -95,6 +110,15 @@ pub fn run() {
             commands::update_check,
             commands::update_install,
             commands::quick_accent_preview,
+            commands::timer_state,
+            commands::timer_command,
+            commands::notch_set_layout,
+            commands::recents_list,
+            commands::recents_copy,
+            commands::recents_open,
+            commands::recents_drag,
+            commands::recents_remove,
+            commands::recents_clear,
             commands::settings_window_ready,
             commands::get_settings,
             commands::update_settings,
@@ -130,6 +154,8 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     app.manage(AudioVisualizer::default());
     app.manage(UpdateService::default());
     app.manage(QuickAccentService::default());
+    app.manage(TimerService::default());
+    app.manage(RecentsService::load(data_dir.join(RECENTS_FOLDER_NAME)));
 
     tray::create(app)?;
     notch::initialize(app)?;
@@ -139,6 +165,8 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     media::start_watcher(app);
     audio::start(app);
     updates::spawn_periodic_check(app);
+    timer::start_watcher(app);
+    recents::start(app);
     log::info!("L8 Toolkit {} ready", app.package_info().version);
     Ok(())
 }

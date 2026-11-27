@@ -50,7 +50,7 @@ export interface AppearanceSettings {
   accent: AccentColor;
 }
 
-export type OpenSource = "hotkey" | "hover" | "tray";
+export type OpenSource = "hotkey" | "hover" | "tray" | "drop";
 
 export type WebSearchEngine = "google" | "bing" | "duckduckgo" | "brave";
 
@@ -102,6 +102,30 @@ export interface AccentBarState {
   index: number;
 }
 
+export interface TimerSettings {
+  enabled: boolean;
+  /** The running timer in the folded notch. */
+  showInNotch: boolean;
+  /** Windows notification when a period ends. */
+  notify: boolean;
+  focusMinutes: number;
+  shortBreakMinutes: number;
+  longBreakMinutes: number;
+  roundsBeforeLongBreak: number;
+  /** The next Pomodoro phase starts by itself. */
+  autoContinue: boolean;
+}
+
+export interface RecentsSettings {
+  enabled: boolean;
+  /** How many items are kept. */
+  limit: number;
+  /** The notch briefly shows a new screenshot. */
+  screenshotPeek: boolean;
+  /** Copies from password managers are kept (never shown in clear). */
+  keepPasswordManagerItems: boolean;
+}
+
 export type LanguagePreference = "system" | "en" | "fr";
 
 export interface AppSettings {
@@ -114,6 +138,8 @@ export interface AppSettings {
   spotlight: SpotlightSettings;
   music: MusicSettings;
   quickAccent: QuickAccentSettings;
+  timer: TimerSettings;
+  recents: RecentsSettings;
 }
 
 export interface AppStatus {
@@ -161,7 +187,75 @@ export type PlaybackRequest =
   | { type: "previous" }
   | { type: "seek"; positionMs: number };
 
-export type WidgetTab = "search" | "music";
+export type WidgetTab = "search" | "music" | "timer" | "recents";
+
+export type RecentKind = "text" | "image" | "files";
+/** copy: Ctrl+C anywhere; screenshot: a screen capture; shelf: dropped on the notch. */
+export type RecentOrigin = "copy" | "screenshot" | "shelf";
+
+export interface RecentFile {
+  path: string;
+  name: string;
+  /** False once the file was moved or deleted. */
+  exists: boolean;
+}
+
+/** One Recents item, mirrored from recents/mod.rs. */
+export interface RecentView {
+  id: string;
+  kind: RecentKind;
+  origin: RecentOrigin;
+  createdAtMs: number;
+  /** The beginning of a text; null for sensitive items. */
+  preview: string | null;
+  textLength: number;
+  files: RecentFile[];
+  /** Small PNG data URL for images. */
+  thumbnail: string | null;
+  imageSize: [number, number] | null;
+  /** Copied from a password manager: never shown in clear. */
+  sensitive: boolean;
+  sourceApp: string | null;
+}
+
+/** Files dragged over the notch window (Tauri drag and drop). */
+/** Files dragged over the notch (Rust keeps the dropped ones itself). */
+export type FileDragEvent = { type: "enter" | "leave" | "drop" };
+
+export type TimerMode = "countdown" | "pomodoro";
+export type PomodoroPhase = "focus" | "shortBreak" | "longBreak";
+export type TimerStatus = "idle" | "running" | "paused";
+
+/** Mirrors timer/machine.rs. While running, time left is derived from `endsAtMs`. */
+export interface TimerSnapshot {
+  mode: TimerMode;
+  status: TimerStatus;
+  phase: PomodoroPhase | null;
+  durationMs: number;
+  remainingMs: number;
+  /** Unix time (ms) at which the period ends, while running. */
+  endsAtMs: number | null;
+  completedFocus: number;
+  rounds: number;
+  updatedAtMs: number;
+}
+
+/** A period came to its end (timer/machine.rs). */
+export interface TimerFinished {
+  mode: TimerMode;
+  phase: PomodoroPhase | null;
+  nextPhase: PomodoroPhase | null;
+  continued: boolean;
+}
+
+export type TimerRequest =
+  | { type: "startCountdown"; durationMs: number }
+  | { type: "startPomodoro" }
+  | { type: "pause" }
+  | { type: "resume" }
+  | { type: "reset" }
+  | { type: "addTime"; deltaMs: number }
+  | { type: "skip" };
 
 /** In-app update progress, mirrored from updates.rs. */
 export type UpdateState =
@@ -177,8 +271,12 @@ export interface NotchSnapshot {
   isOpen: boolean;
 }
 
+/** Where the pointer rested: the notch, or the bubble of a second activity beside it. */
+export type HoverZone = "notch" | "bubble";
+
 export interface NotchOpenedPayload {
   source: OpenSource;
+  zone?: HoverZone;
   /** Screen behind the notch (Acrylic material), as a PNG data URL. */
   backdrop?: string | null;
 }

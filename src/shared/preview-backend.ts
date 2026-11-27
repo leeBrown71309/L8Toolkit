@@ -1,3 +1,5 @@
+import { createPreviewRecents } from "./preview-recents";
+import { createPreviewTimer } from "./preview-timer";
 import type { Backend, Unlisten } from "./backend";
 import type {
   AppSettings,
@@ -15,6 +17,10 @@ import type {
  * Tauri (`bun run dev` in a browser) so the design can be iterated on quickly.
  * Trigger events from the console: `window.l8Preview.emit("notch:opened", { source: "hotkey" })`.
  * Accent bar: `window.l8Preview.emit("accent:state", { visible: true, characters: ["é", "è", "ê", "ë"], index: 1 })`.
+ * Screenshot peek: `window.l8Preview.recents.screenshot()`.
+ * Shelf drop: `window.l8Preview.emit("notch:file-drag", { type: "enter" })`, then
+ * `window.l8Preview.recents.addFiles(["C:\\Docs\\Plan.pdf"])` and `emit("notch:file-drag", { type: "drop" })`.
+ * Timer: `window.l8Preview.timer.apply({ type: "startCountdown", durationMs: 60000 })` (`?timerSpeed=40` runs it faster).
  */
 
 const PREVIEW_APPS = [
@@ -80,6 +86,17 @@ const DEFAULT_SETTINGS: AppSettings = {
   },
   music: { enabled: true, showInNotch: true, peekOnTrackChange: true, artworkTint: true, showAudioBars: true },
   quickAccent: { enabled: true, languages: ["fr"], trigger: "spaceAndArrows" },
+  timer: {
+    enabled: true,
+    showInNotch: true,
+    notify: true,
+    focusMinutes: 25,
+    shortBreakMinutes: 5,
+    longBreakMinutes: 15,
+    roundsBeforeLongBreak: 4,
+    autoContinue: true,
+  },
+  recents: { enabled: true, limit: 10, screenshotPeek: true, keepPasswordManagerItems: true },
 };
 
 function previewResult(kind: ResultKind, title: string, subtitle: string, matchIndices: number[] = []): SearchResult {
@@ -227,7 +244,10 @@ export function createPreviewBackend(): Backend {
     emit("update:state", next);
   };
 
-  (window as unknown as { l8Preview: unknown }).l8Preview = { emit, setMedia, previewTrack, setRemoteAudio, setUpdateState };
+  const timer = createPreviewTimer(() => snapshot.settings.timer, emit);
+  const recents = createPreviewRecents(emit);
+
+  (window as unknown as { l8Preview: unknown }).l8Preview = { emit, setMedia, previewTrack, setRemoteAudio, setUpdateState, timer, recents };
 
   return {
     search: async (query) => previewSearch(query),
@@ -278,6 +298,15 @@ export function createPreviewBackend(): Backend {
       }
       setUpdateState({ status: "installing", version: "0.2.0" });
     },
+    timerState: async () => timer.snapshot(),
+    timerCommand: async (request) => timer.apply(request),
+    notchSetLayout: async () => undefined,
+    recentsList: async () => recents.list(),
+    recentsCopy: async (id) => recents.copy(id),
+    recentsOpen: async (id) => console.info("[preview] open recent", id),
+    recentsDrag: async (id) => console.info("[preview] drag recent", id),
+    recentsRemove: async (id) => recents.remove(id),
+    recentsClear: async () => recents.clear(),
     getSettings: async () => snapshot,
     updateSettings: async (settings) => {
       snapshot = { ...snapshot, settings };

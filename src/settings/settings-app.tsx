@@ -1,11 +1,12 @@
 import {
   ArrowsClockwise,
+  ClockCounterClockwise,
   type Icon,
   MagnifyingGlass,
   MusicNotesSimple,
-  Palette,
   SlidersHorizontal,
   TextAa,
+  Timer,
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -16,18 +17,19 @@ import type { MessageKey } from "../i18n/messages/en";
 import { useApplyAppearance } from "../shared/appearance";
 import { backend, BACKEND_EVENTS } from "../shared/backend";
 import { useBackendEvent } from "../shared/use-backend-event";
-import { AppearanceSection } from "./sections/appearance-section";
 import { GeneralSection } from "./sections/general-section";
 import { MusicSection } from "./sections/music-section";
 import { QuickAccentSection } from "./sections/quick-accent-section";
+import { RecentsSection } from "./sections/recents-section";
 import { SpotlightSection } from "./sections/spotlight-section";
+import { TimerSection } from "./sections/timer-section";
 import { UpdatesSection } from "./sections/updates-section";
 import { useSettingsController } from "./use-settings-controller";
 import { useUpdateState } from "./use-update-state";
 
 import "./settings.css";
 
-type SectionKey = "general" | "spotlight" | "appearance" | "music" | "quickAccent" | "updates";
+type SectionKey = "general" | "spotlight" | "music" | "timer" | "recents" | "quickAccent" | "updates";
 
 interface NavigationItem {
   key: SectionKey;
@@ -37,8 +39,9 @@ interface NavigationItem {
 
 const NAVIGATION: NavigationItem[] = [
   { key: "spotlight", labelKey: "nav.spotlight", icon: MagnifyingGlass },
-  { key: "appearance", labelKey: "nav.appearance", icon: Palette },
   { key: "music", labelKey: "nav.music", icon: MusicNotesSimple },
+  { key: "timer", labelKey: "nav.timer", icon: Timer },
+  { key: "recents", labelKey: "nav.recents", icon: ClockCounterClockwise },
   { key: "quickAccent", labelKey: "nav.quickAccent", icon: TextAa },
   { key: "general", labelKey: "nav.general", icon: SlidersHorizontal },
   { key: "updates", labelKey: "nav.updates", icon: ArrowsClockwise },
@@ -130,8 +133,9 @@ export function SettingsApp() {
               {section === "spotlight" && (
                 <SpotlightSection snapshot={snapshot} controller={controller} />
               )}
-              {section === "appearance" && <AppearanceSection snapshot={snapshot} controller={controller} />}
               {section === "music" && <MusicSection snapshot={snapshot} controller={controller} />}
+              {section === "timer" && <TimerSection snapshot={snapshot} controller={controller} />}
+              {section === "recents" && <RecentsSection snapshot={snapshot} controller={controller} />}
               {section === "quickAccent" && <QuickAccentSection snapshot={snapshot} controller={controller} />}
               {section === "general" && <GeneralSection snapshot={snapshot} controller={controller} />}
               {section === "updates" && <UpdatesSection snapshot={snapshot} updates={updates} />}
