@@ -1,7 +1,7 @@
 //! Placeholder implementations for platforms that are not supported yet.
 //! They fail loudly (returning errors) instead of silently doing nothing.
 
-use super::{HookEvent, InstalledApp, PressedModifiers, MediaArtwork, MediaCommand, MediaSnapshot, ScreenRect, ShellVerb};
+use super::{DropZoneHandler, FolderChangeHandler, HookEvent, InstalledApp, PressedModifiers, MediaArtwork, MediaCommand, MediaSnapshot, ScreenRect, ShellVerb};
 
 const UNSUPPORTED: &str = "This feature is not implemented on this platform yet";
 
@@ -149,6 +149,10 @@ pub fn protect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
 
 pub fn unprotect_for_user(_bytes: &[u8]) -> Result<Vec<u8>, String> {
     unsupported()
+}
+
+pub fn watch_folders(_folders: Vec<std::path::PathBuf>, _handler: FolderChangeHandler) -> Result<(), String> {
+    Err(UNSUPPORTED.to_string())
 }
 
 pub fn start_drop_zone(_handler: DropZoneHandler) -> Result<(), String> {

@@ -172,7 +172,7 @@ src-tauri/src/            Rust core
   timer/                  timer and Pomodoro: pure logic (machine.rs), deadline watcher, notification
   updates.rs              in-app updates: periodic check, notification, signed install
   appearance.rs           window theme for the light/dark setting
-  indexer.rs              background (re)indexing every 15 minutes
+  indexer.rs              background (re)indexing: watched Start menu and file folders, 15-minute safety net
   settings*.rs, usage.rs  persisted settings, launch history and pins (JSON)
 src/                      React UI (one bundle, two windows)
   styles/tokens.css       design tokens: dark/light themes, materials, accent

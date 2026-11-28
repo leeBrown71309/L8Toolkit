@@ -1,6 +1,6 @@
 [package]
 name = "l8-tools-kits"
-version = "0.1.4"
+version = "0.1.5"
 description = "A collection of desktop widgets living in a virtual notch"
 edition = "2021"
 rust-version = "1.90"
@@ -45,6 +45,7 @@ windows = { version = "0.62", features = [
     "Win32_Media_Audio",
     "Win32_Security_Cryptography",
     "Win32_Storage_EnhancedStorage",
+    "Win32_Storage_FileSystem",
     "Win32_System_Com",
     "Win32_System_Com_StructuredStorage",
     "Win32_System_DataExchange",

@@ -162,6 +162,7 @@ fn setup(app: &AppHandle) -> Result<(), Box<dyn Error>> {
     settings_sync::apply_on_startup(app);
     indexer::spawn_full_index(app);
     indexer::spawn_periodic_refresh(app);
+    indexer::spawn_change_watchers(app);
     media::start_watcher(app);
     audio::start(app);
     updates::spawn_periodic_check(app);

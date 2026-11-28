@@ -176,6 +176,8 @@ fn open_at(app: &AppHandle, source: OpenSource, zone: HoverZone) {
     if !enabled {
         return;
     }
+    // Store apps installed meanwhile become searchable (no shortcut to watch).
+    crate::indexer::refresh_apps_if_stale(app);
     let controller = app.state::<NotchController>();
     if controller.is_open.swap(true, Ordering::SeqCst) {
         return;
