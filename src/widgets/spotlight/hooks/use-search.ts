@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
-import { backend, describeError } from "../../../shared/backend";
+import { backend, BACKEND_EVENTS, describeError } from "../../../shared/backend";
 import type { SearchResult, SearchSection } from "../../../shared/types";
+import { useBackendEvent } from "../../../shared/use-backend-event";
 
 interface SearchState {
   sections: SearchSection[];
@@ -12,11 +13,14 @@ interface SearchState {
  * Searches on every keystroke (the Rust index answers in a few ms) and keeps
  * the previous results on screen until the next ones arrive, so the list
  * never flashes empty while typing. Bump `reloadToken` to search again after
- * an action changed the results (pin, delete).
+ * an action changed the results (pin, delete). A finished (re)index searches
+ * again too: an app installed a moment ago appears without retyping.
  */
 export function useSearch(query: string, reloadToken: number): SearchState {
   const [state, setState] = useState<SearchState>({ sections: [], error: null });
   const latestRequest = useRef(0);
+  const [indexVersion, setIndexVersion] = useState(0);
+  useBackendEvent(BACKEND_EVENTS.indexStatus, () => setIndexVersion((version) => version + 1));
 
   useEffect(() => {
     const requestId = ++latestRequest.current;
@@ -32,7 +36,7 @@ export function useSearch(query: string, reloadToken: number): SearchState {
       .catch((error: unknown) => {
         if (requestId === latestRequest.current) setState({ sections: [], error: describeError(error) });
       });
-  }, [query, reloadToken]);
+  }, [query, reloadToken, indexVersion]);
 
   return state;
 }

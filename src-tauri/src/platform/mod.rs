@@ -95,6 +95,9 @@ pub enum DropZoneEvent {
 
 pub type DropZoneHandler = Box<dyn Fn(DropZoneEvent) + Send + 'static>;
 
+/// Called with the index of the watched folder where something changed.
+pub type FolderChangeHandler = Box<dyn Fn(usize) + Send + 'static>;
+
 /// Keys reported by the system keyboard hook (only those features react to).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HookKey {
